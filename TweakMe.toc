@@ -1,0 +1,8 @@
+## Interface: 16001
+## Title: TweakMe
+## Notes: Tweaks standard UI behavior using chat commands.
+## Author: TweakMe
+## Version: 0.1.0
+## SavedVariablesPerCharacter: TweakMeDB
+
+TweakMe.lua
