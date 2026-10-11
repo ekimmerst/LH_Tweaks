@@ -1,6 +1,8 @@
 local addonName = ...
 local states = {}
 local functionHooks = {}
+local editStates = {}
+local chatBarApplied = false
 local initialized, applied, pending = false, false, false
 
 local function Print(message)
@@ -40,6 +42,47 @@ local function Enforce(frame, state)
     state.busy = false
 end
 
+local function PositionChatBar(editBox, state)
+    if state.busy then return end
+    if InCombat() then pending = true; return end
+    state.busy = true
+    local chat = state.chat
+    editBox:ClearAllPoints()
+    if chatBarApplied then
+        editBox:SetPoint("BOTTOMLEFT", chat, "TOPLEFT", -5, 2)
+    else
+        editBox:SetPoint("TOPLEFT", chat, "BOTTOMLEFT", -5, -2)
+    end
+    -- Preserve Blizzard's horizontal alignment with the scrollbar when available.
+    editBox:SetPoint("RIGHT", chat.ScrollBar or chat, "RIGHT", chat.ScrollBar and 8 or 5, 0)
+    state.busy = false
+end
+
+local function ApplyChatBars(frames)
+    chatBarApplied = TweakMeDB.moveChatBarToTop == true
+    local foundPrimary = false
+    for _, chat in ipairs(frames) do
+        local name = chat.GetName and chat:GetName()
+        local editBox = chat.editBox or (name and _G[name .. "EditBox"])
+        if editBox and editBox.ClearAllPoints and editBox.SetPoint then
+            if chat == ChatFrame1 then foundPrimary = true end
+            local state = editStates[editBox]
+            if not state then
+                state = { chat = chat }
+                editStates[editBox] = state
+                local function EnforcePosition(self)
+                    if chatBarApplied and not state.busy then PositionChatBar(self, state) end
+                end
+                hooksecurefunc(editBox, "SetPoint", EnforcePosition)
+                hooksecurefunc(editBox, "ClearAllPoints", EnforcePosition)
+            end
+            state.chat = chat
+            PositionChatBar(editBox, state)
+        end
+    end
+    if chatBarApplied and not foundPrimary then pending = true end
+end
+
 local Apply
 local function InstallFunctionHooks()
     for _, name in ipairs({"FCF_OpenNewWindow", "FCF_OpenTemporaryWindow", "FCF_RestorePositionAndDimensions", "FCF_SetWindowPosition"}) do
@@ -57,6 +100,7 @@ Apply = function()
     applied = TweakMeDB.chatWindow == true
     InstallFunctionHooks()
     local frames = DiscoverFrames()
+    ApplyChatBars(frames)
     if applied and not ChatFrame1 then pending = true end
     for _, frame in ipairs(frames) do
         local state = states[frame]
@@ -95,7 +139,9 @@ end
 local function Help()
     Print("/tweakme remove-chatwindow-move-limit on - allow standard chat windows to move beyond the screen edges.")
     Print("/tweakme remove-chatwindow-move-limit off - restore normal screen constraints.")
-    Print("/tweakme status - show the saved setting; /tweakme help - show commands.")
+    Print("/tweakme move-chatbar-to-top on - place chat input above the chat window.")
+    Print("/tweakme move-chatbar-to-top off - place chat input at its default position below the chat window.")
+    Print("/tweakme status - show saved settings; /tweakme help - show commands.")
 end
 
 SLASH_TWEAKME1 = "/tweakme"
@@ -105,6 +151,11 @@ SlashCmdList.TWEAKME = function(message)
         Help()
     elseif command == "status" and value == "" and extra == "" then
         Print("remove-chatwindow-move-limit: " .. (TweakMeDB.chatWindow and "on" or "off") .. (pending and " (pending)" or ""))
+        Print("move-chatbar-to-top: " .. (TweakMeDB.moveChatBarToTop and "on" or "off") .. (pending and " (pending)" or ""))
+    elseif command == "move-chatbar-to-top" and (value == "on" or value == "off") and extra == "" then
+        TweakMeDB.moveChatBarToTop = value == "on"
+        Apply()
+        Print("move-chatbar-to-top: " .. value .. (pending and " (pending; applies after combat or when chat frames load)" or ""))
     elseif command == "remove-chatwindow-move-limit" and (value == "on" or value == "off") and extra == "" then
         TweakMeDB.chatWindow = value == "on"
         Apply()
@@ -122,6 +173,7 @@ events:SetScript("OnEvent", function(_, event, name)
     if event == "ADDON_LOADED" and name == addonName then
         if type(TweakMeDB) ~= "table" then TweakMeDB = {} end
         TweakMeDB.chatWindow = TweakMeDB.chatWindow == true
+        TweakMeDB.moveChatBarToTop = TweakMeDB.moveChatBarToTop == true
         initialized = true
     end
     if initialized then Apply() end
