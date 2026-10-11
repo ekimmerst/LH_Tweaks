@@ -1,13 +1,13 @@
 # TweakMe
 
-Standalone chat-controlled addon for WoW Forever Beta. Version 0.1.0; interface 16001, matching the installed HideMe and ShowMe addons. No dependencies.
+Standalone chat-controlled addon for WoW Forever Beta. Version 0.1.1; interface 16001, matching the installed HideMe and ShowMe addons. No dependencies.
 
 ## Installation and commands
 
 Keep TweakMe in Interface/AddOns and enable it in the AddOns menu. Restart the client if installed while the game is running.
 
-- /tweakme chatwindow on: remove screen constraints from standard chat windows so they can be moved to and beyond the screen edges.
-- /tweakme chatwindow off: restore the screen constraints requested before or during the tweak.
+- /tweakme remove-chatwindow-move-limit on: remove screen constraints from standard chat windows so they can be moved to and beyond the screen edges.
+- /tweakme remove-chatwindow-move-limit off: restore the screen constraints requested before or during the tweak.
 - /tweakme status: show the saved setting and pending changes.
 - /tweakme help, or /tweakme without arguments: show usage.
 

@@ -93,8 +93,8 @@ Apply = function()
 end
 
 local function Help()
-    Print("/tweakme chatwindow on - allow standard chat windows to move beyond the screen edges.")
-    Print("/tweakme chatwindow off - restore normal screen constraints.")
+    Print("/tweakme remove-chatwindow-move-limit on - allow standard chat windows to move beyond the screen edges.")
+    Print("/tweakme remove-chatwindow-move-limit off - restore normal screen constraints.")
     Print("/tweakme status - show the saved setting; /tweakme help - show commands.")
 end
 
@@ -104,11 +104,11 @@ SlashCmdList.TWEAKME = function(message)
     if (command == "" or command == "help") and value == "" and extra == "" then
         Help()
     elseif command == "status" and value == "" and extra == "" then
-        Print("chatwindow: " .. (TweakMeDB.chatWindow and "on" or "off") .. (pending and " (pending)" or ""))
-    elseif command == "chatwindow" and (value == "on" or value == "off") and extra == "" then
+        Print("remove-chatwindow-move-limit: " .. (TweakMeDB.chatWindow and "on" or "off") .. (pending and " (pending)" or ""))
+    elseif command == "remove-chatwindow-move-limit" and (value == "on" or value == "off") and extra == "" then
         TweakMeDB.chatWindow = value == "on"
         Apply()
-        Print("chatwindow: " .. value .. (pending and " (pending; applies after combat or when chat frames load)" or ""))
+        Print("remove-chatwindow-move-limit: " .. value .. (pending and " (pending; applies after combat or when chat frames load)" or ""))
     else
         Print("Invalid command. Use /tweakme help.")
     end
