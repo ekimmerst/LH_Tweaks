@@ -179,11 +179,25 @@ Apply = function()
     end
 end
 
+local function AutoRepair()
+    if not TweakMeDB.autoRepair or not CanMerchantRepair() then return end
+    local cost, canRepair = GetRepairAllCost()
+    if not canRepair or not cost or cost <= 0 then return end
+    if GetMoney() < cost then
+        Print("Auto-repair skipped: not enough money.")
+        return
+    end
+    -- Use the merchant's repair-all operation with personal funds only.
+    RepairAllItems(false)
+end
+
 local function Help()
     Print("/tweakme remove-chatwindow-move-limit on - allow standard chat windows to move beyond the screen edges and hide their scrollbars.")
     Print("/tweakme remove-chatwindow-move-limit off - restore normal screen constraints and scrollbar visibility.")
     Print("/tweakme move-chatbar-to-top on - place chat input above the chat window.")
     Print("/tweakme move-chatbar-to-top off - place chat input at its default position below the chat window.")
+    Print("/tweakme auto-repair on - automatically repair all items at repair-capable merchants using your own money.")
+    Print("/tweakme auto-repair off - disable automatic repairs.")
     Print("/tweakme status - show saved settings; /tweakme help - show commands.")
 end
 
@@ -195,6 +209,10 @@ SlashCmdList.TWEAKME = function(message)
     elseif command == "status" and value == "" and extra == "" then
         Print("remove-chatwindow-move-limit: " .. (TweakMeDB.chatWindow and "on" or "off") .. (pending and " (pending)" or ""))
         Print("move-chatbar-to-top: " .. (TweakMeDB.moveChatBarToTop and "on" or "off") .. (pending and " (pending)" or ""))
+        Print("auto-repair: " .. (TweakMeDB.autoRepair and "on" or "off"))
+    elseif command == "auto-repair" and (value == "on" or value == "off") and extra == "" then
+        TweakMeDB.autoRepair = value == "on"
+        Print("auto-repair: " .. value)
     elseif command == "move-chatbar-to-top" and (value == "on" or value == "off") and extra == "" then
         TweakMeDB.moveChatBarToTop = value == "on"
         Apply()
@@ -209,7 +227,7 @@ SlashCmdList.TWEAKME = function(message)
 end
 
 local events = CreateFrame("Frame")
-for _, event in ipairs({"ADDON_LOADED", "PLAYER_LOGIN", "PLAYER_ENTERING_WORLD", "PLAYER_REGEN_ENABLED", "UPDATE_CHAT_WINDOWS", "UPDATE_FLOATING_CHAT_WINDOWS"}) do
+for _, event in ipairs({"ADDON_LOADED", "PLAYER_LOGIN", "PLAYER_ENTERING_WORLD", "PLAYER_REGEN_ENABLED", "UPDATE_CHAT_WINDOWS", "UPDATE_FLOATING_CHAT_WINDOWS", "MERCHANT_SHOW"}) do
     events:RegisterEvent(event)
 end
 events:SetScript("OnEvent", function(_, event, name)
@@ -217,7 +235,12 @@ events:SetScript("OnEvent", function(_, event, name)
         if type(TweakMeDB) ~= "table" then TweakMeDB = {} end
         TweakMeDB.chatWindow = TweakMeDB.chatWindow == true
         TweakMeDB.moveChatBarToTop = TweakMeDB.moveChatBarToTop == true
+        TweakMeDB.autoRepair = TweakMeDB.autoRepair == true
         initialized = true
+    end
+    if event == "MERCHANT_SHOW" then
+        if initialized then AutoRepair() end
+        return
     end
     if initialized then Apply() end
 end)

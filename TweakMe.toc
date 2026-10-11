@@ -2,7 +2,7 @@
 ## Title: TweakMe
 ## Notes: Tweaks standard UI behavior using chat commands.
 ## Author: TweakMe
-## Version: 0.2.1
+## Version: 0.3.0
 ## SavedVariablesPerCharacter: TweakMeDB
 
 TweakMe.lua

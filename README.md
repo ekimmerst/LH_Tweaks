@@ -1,6 +1,6 @@
 # TweakMe
 
-Standalone chat-controlled addon for WoW Forever Beta. Version 0.2.1; interface 16001, matching the installed HideMe and ShowMe addons. No dependencies.
+Standalone chat-controlled addon for WoW Forever Beta. Version 0.3.0; interface 16001, matching the installed HideMe and ShowMe addons. No dependencies.
 
 ## Installation and commands
 
@@ -10,12 +10,16 @@ Keep TweakMe in Interface/AddOns and enable it in the AddOns menu. Restart the c
 - /tweakme remove-chatwindow-move-limit off: restore the screen constraints and scrollbar visibility requested before or during the tweak.
 - /tweakme move-chatbar-to-top on: place standard chat input fields above their chat windows.
 - /tweakme move-chatbar-to-top off: place input fields at the default position below their chat windows.
+- /tweakme auto-repair on: automatically repair all items when opening a repair-capable merchant.
+- /tweakme auto-repair off: disable automatic repairs.
 - /tweakme status: show the saved setting and pending changes.
 - /tweakme help, or /tweakme without arguments: show usage.
 
-Disabled by default. Settings persist per character through /reload and restarts. Commands ignore case and surrounding whitespace; invalid or extra arguments do not change settings. Combat changes apply after combat ends.
+Disabled by default. Settings persist per character through /reload and restarts. Commands ignore case and surrounding whitespace; invalid or extra arguments do not change settings. Chat layout changes during combat apply after combat ends.
 
 ## Behavior
+
+Auto-repair is independent of chat settings and saved as TweakMeDB.autoRepair. On MERCHANT_SHOW, a repair-capable merchant repairs all damaged equipped items and repairable items in your bags using the standard repair-all operation. Only personal money is used; guild funds are never used. No action is taken when repairs are unnecessary or the merchant cannot repair. If personal funds do not cover the full cost, repairs are skipped with a chat message. Enabling the setting takes effect on the next merchant visit; off leaves manual repairs available.
 
 Use the existing Edit Mode to move the primary chat window, then save the layout normally. Undocked windows retain their normal movement controls. TweakMe disables SetClampedToScreen for standard chat windows and their Edit Mode selection frames. It preserves the clamp insets and existing anchors. Secure post-hooks reapply the tweak when Blizzard requests screen clamping or changes clamp insets. New and temporary windows are discovered through events and available chat creation functions.
 
@@ -24,6 +28,8 @@ Off restores each frame's previous clamp state, including an originally unclampe
 The input position setting is independent of screen constraints and saved as TweakMeDB.moveChatBarToTop. Top mode anchors the input two pixels above the window; off uses Blizzard's default bottom anchors. Horizontal alignment follows the scrollbar when available and the chat frame otherwise. Guarded secure anchor hooks maintain top mode after layout updates. Input text, focus, visibility and scripts are preserved, including HideMe chat-bar behavior. Changes wait until combat ends.
 
 ## Verification
+
+Version 0.3.0: a temporary Lupa simulation passed default/off, repair-capable and ordinary merchants, repair need and zero cost, insufficient/exactly sufficient/sufficient money, personal funds, invalid commands, saved setting normalization and independence from chat settings. The user confirmed on October 11, 2026 that auto-repair works in game. Detailed compatibility checks remain pending: on/off and /reload persistence, damaged gear and bag items, ordinary merchants, undamaged items and insufficient money.
 
 The version 0.2.1 temporary Lupa simulation passed toggling, repeated on, originally hidden scrollbars, latest Show/Hide/SetShown requests, clamp restoration, new windows and combat deferral. The user confirmed on October 11, 2026 that scrollbar hiding works in game. Detailed compatibility checks remain pending.
 
