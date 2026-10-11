@@ -179,6 +179,30 @@ Apply = function()
     end
 end
 
+local function AutoSellGreys()
+    if not TweakMeDB.autoSellGreys then return end
+    if C_MerchantFrame and C_MerchantFrame.SellAllJunkItems then
+        C_MerchantFrame.SellAllJunkItems()
+        return
+    end
+    -- Support clients without the merchant's built-in sell-junk operation.
+    local container = C_Container or _G
+    if not container.GetContainerNumSlots or not container.GetContainerItemInfo or not container.UseContainerItem then return end
+    if CursorHasItem and CursorHasItem() then return end
+    if InRepairMode and InRepairMode() then return end
+    for bag = 0, (NUM_TOTAL_EQUIPPED_BAG_SLOTS or NUM_BAG_SLOTS or 4) do
+        for slot = 1, container.GetContainerNumSlots(bag) do
+            local info, count, locked, quality, readable, lootable, link, filtered, noValue = container.GetContainerItemInfo(bag, slot)
+            if type(info) == "table" then
+                locked, quality, noValue = info.isLocked, info.quality, info.hasNoValue
+            end
+            if info and quality == 0 and not locked and not noValue then
+                container.UseContainerItem(bag, slot)
+            end
+        end
+    end
+end
+
 local function AutoRepair()
     if not TweakMeDB.autoRepair or not CanMerchantRepair() then return end
     local cost, canRepair = GetRepairAllCost()
@@ -192,12 +216,15 @@ local function AutoRepair()
 end
 
 local function Help()
+    Print("/tweakme all on|off - enable or disable all tweaks; merchant actions start on the next visit.")
     Print("/tweakme remove-chatwindow-move-limit on - allow standard chat windows to move beyond the screen edges and hide their scrollbars.")
     Print("/tweakme remove-chatwindow-move-limit off - restore normal screen constraints and scrollbar visibility.")
     Print("/tweakme move-chatbar-to-top on - place chat input above the chat window.")
     Print("/tweakme move-chatbar-to-top off - place chat input at its default position below the chat window.")
     Print("/tweakme auto-repair on - automatically repair all items at repair-capable merchants using your own money.")
     Print("/tweakme auto-repair off - disable automatic repairs.")
+    Print("/tweakme auto-sell-greys on - automatically sell grey items when visiting a merchant.")
+    Print("/tweakme auto-sell-greys off - disable automatic grey-item sales.")
     Print("/tweakme status - show saved settings; /tweakme help - show commands.")
 end
 
@@ -210,6 +237,18 @@ SlashCmdList.TWEAKME = function(message)
         Print("remove-chatwindow-move-limit: " .. (TweakMeDB.chatWindow and "on" or "off") .. (pending and " (pending)" or ""))
         Print("move-chatbar-to-top: " .. (TweakMeDB.moveChatBarToTop and "on" or "off") .. (pending and " (pending)" or ""))
         Print("auto-repair: " .. (TweakMeDB.autoRepair and "on" or "off"))
+        Print("auto-sell-greys: " .. (TweakMeDB.autoSellGreys and "on" or "off"))
+    elseif command == "all" and (value == "on" or value == "off") and extra == "" then
+        local enabled = value == "on"
+        TweakMeDB.chatWindow = enabled
+        TweakMeDB.moveChatBarToTop = enabled
+        TweakMeDB.autoRepair = enabled
+        TweakMeDB.autoSellGreys = enabled
+        Apply()
+        Print("All tweaks: " .. value .. (pending and " (chat changes pending; apply after combat or when chat frames load)" or ""))
+    elseif command == "auto-sell-greys" and (value == "on" or value == "off") and extra == "" then
+        TweakMeDB.autoSellGreys = value == "on"
+        Print("auto-sell-greys: " .. value)
     elseif command == "auto-repair" and (value == "on" or value == "off") and extra == "" then
         TweakMeDB.autoRepair = value == "on"
         Print("auto-repair: " .. value)
@@ -236,10 +275,14 @@ events:SetScript("OnEvent", function(_, event, name)
         TweakMeDB.chatWindow = TweakMeDB.chatWindow == true
         TweakMeDB.moveChatBarToTop = TweakMeDB.moveChatBarToTop == true
         TweakMeDB.autoRepair = TweakMeDB.autoRepair == true
+        TweakMeDB.autoSellGreys = TweakMeDB.autoSellGreys == true
         initialized = true
     end
     if event == "MERCHANT_SHOW" then
-        if initialized then AutoRepair() end
+        if initialized then
+            AutoSellGreys()
+            AutoRepair()
+        end
         return
     end
     if initialized then Apply() end

@@ -2,7 +2,8 @@
 ## Title: TweakMe
 ## Notes: Tweaks standard UI behavior using chat commands.
 ## Author: TweakMe
-## Version: 0.3.0
+## Version: 0.5.0
+## IconTexture: Interface\AddOns\TweakMe\Icon.tga
 ## SavedVariablesPerCharacter: TweakMeDB
 
 TweakMe.lua

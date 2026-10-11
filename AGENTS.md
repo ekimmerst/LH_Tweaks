@@ -2,7 +2,12 @@
 
 - Communicate with the user in German. Keep addon messages, comments, metadata and documentation in English, consistent with HideMe and ShowMe.
 - Work only in TweakMe unless the user requests otherwise. Read TweakMe.lua, TweakMe.toc and README.md before changes.
-- Standalone WoW Forever Beta addon, interface 16001, version 0.3.0. Local Git repository on branch main; private GitHub repository ekimmerst/tweakme configured as origin over HTTPS.
+- Standalone WoW Forever Beta addon, interface 16001, version 0.5.0. Local Git repository on branch main; private GitHub repository ekimmerst/tweakme configured as origin over HTTPS.
+- Version 0.5.0 adds all on|off, updating chatWindow, moveChatBarToTop, autoRepair and autoSellGreys together without a separate saved flag. Apply chat settings once, preserve combat deferral, and run merchant actions on the next visit. Individual commands remain independent. In-game verification is pending.
+- Version 0.5.0 temporary Lupa simulation passed bulk on/off, invalid arguments, individual overrides, merchant timing, chat application/restoration, combat deferral and saved setting normalization.
+- Version 0.4.0 adds auto-sell-greys on|off, default false, saved as TweakMeDB.autoSellGreys. On MERCHANT_SHOW, use C_MerchantFrame.SellAllJunkItems when available; otherwise scan equipped bags with modern or legacy container APIs, selling only unlocked quality-0 items with vendor value. Preserve higher qualities, equipped items, bank contents and other settings. In-game verification is pending.
+- Version 0.4.0 temporary Lupa simulations passed native/modern/legacy API paths, settings and command validation, bag-item selection, cursor/repair-mode guards and independence from auto-repair and chat settings.
+- Version 0.3.1 adds Icon.tga via IconTexture metadata for the AddOn list, with Icon.png as a preview. Preserve the uncompressed 256x256 24-bit TGA. In-game icon verification is pending.
 - /tweakme remove-chatwindow-move-limit on|off controls screen constraints and hides/restores chat scrollbars, not chat visibility. Defaults off; SavedVariablesPerCharacter: TweakMeDB.chatWindow.
 - Preserve original false clamp states, restore the latest normal clamp request, guard recursive secure hooks, defer changes and hook installation during combat, discover new and temporary frames.
 - Do not replace Blizzard movement methods or edit global snapping settings. Preserve chat-window anchors, clamp insets, input text/focus/visibility/scripts and other addons.
