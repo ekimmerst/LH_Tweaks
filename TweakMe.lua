@@ -2,6 +2,7 @@ local addonName = ...
 local states = {}
 local functionHooks = {}
 local editStates = {}
+local scrollStates = {}
 local chatBarApplied = false
 local initialized, applied, pending = false, false, false
 
@@ -83,6 +84,47 @@ local function ApplyChatBars(frames)
     if chatBarApplied and not foundPrimary then pending = true end
 end
 
+local function ApplyScrollBars(frames)
+    for _, chat in ipairs(frames) do
+        local name = chat.GetName and chat:GetName()
+        local bar = chat.ScrollBar or (name and _G[name .. "ScrollBar"])
+        if applied and bar and bar.IsShown and bar.Show and bar.Hide then
+            local state = scrollStates[bar]
+            if not state then
+                state = {}
+                scrollStates[bar] = state
+                local function Requested(self, shown)
+                    if state.busy or state.original == nil then return end
+                    state.original = shown and true or false
+                    if not applied then return end
+                    if InCombat() then pending = true; return end
+                    state.busy = true
+                    self:Hide()
+                    state.busy = false
+                end
+                hooksecurefunc(bar, "Show", function(self) Requested(self, true) end)
+                hooksecurefunc(bar, "Hide", function(self) Requested(self, false) end)
+                if bar.SetShown then hooksecurefunc(bar, "SetShown", Requested) end
+            end
+            if state.original == nil then state.original = bar:IsShown() end
+            state.busy = true
+            bar:Hide()
+            state.busy = false
+        end
+    end
+    if not applied then
+        for bar, state in pairs(scrollStates) do
+            if state.original ~= nil then
+                local original = state.original
+                state.original = nil
+                state.busy = true
+                if original then bar:Show() else bar:Hide() end
+                state.busy = false
+            end
+        end
+    end
+end
+
 local Apply
 local function InstallFunctionHooks()
     for _, name in ipairs({"FCF_OpenNewWindow", "FCF_OpenTemporaryWindow", "FCF_RestorePositionAndDimensions", "FCF_SetWindowPosition"}) do
@@ -100,6 +142,7 @@ Apply = function()
     applied = TweakMeDB.chatWindow == true
     InstallFunctionHooks()
     local frames = DiscoverFrames()
+    ApplyScrollBars(frames)
     ApplyChatBars(frames)
     if applied and not ChatFrame1 then pending = true end
     for _, frame in ipairs(frames) do
@@ -137,8 +180,8 @@ Apply = function()
 end
 
 local function Help()
-    Print("/tweakme remove-chatwindow-move-limit on - allow standard chat windows to move beyond the screen edges.")
-    Print("/tweakme remove-chatwindow-move-limit off - restore normal screen constraints.")
+    Print("/tweakme remove-chatwindow-move-limit on - allow standard chat windows to move beyond the screen edges and hide their scrollbars.")
+    Print("/tweakme remove-chatwindow-move-limit off - restore normal screen constraints and scrollbar visibility.")
     Print("/tweakme move-chatbar-to-top on - place chat input above the chat window.")
     Print("/tweakme move-chatbar-to-top off - place chat input at its default position below the chat window.")
     Print("/tweakme status - show saved settings; /tweakme help - show commands.")

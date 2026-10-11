@@ -1,13 +1,13 @@
 # TweakMe
 
-Standalone chat-controlled addon for WoW Forever Beta. Version 0.2.0; interface 16001, matching the installed HideMe and ShowMe addons. No dependencies.
+Standalone chat-controlled addon for WoW Forever Beta. Version 0.2.1; interface 16001, matching the installed HideMe and ShowMe addons. No dependencies.
 
 ## Installation and commands
 
 Keep TweakMe in Interface/AddOns and enable it in the AddOns menu. Restart the client if installed while the game is running.
 
-- /tweakme remove-chatwindow-move-limit on: remove screen constraints from standard chat windows so they can be moved to and beyond the screen edges.
-- /tweakme remove-chatwindow-move-limit off: restore the screen constraints requested before or during the tweak.
+- /tweakme remove-chatwindow-move-limit on: remove screen constraints from standard chat windows so they can be moved to and beyond the screen edges, and hide their scrollbars.
+- /tweakme remove-chatwindow-move-limit off: restore the screen constraints and scrollbar visibility requested before or during the tweak.
 - /tweakme move-chatbar-to-top on: place standard chat input fields above their chat windows.
 - /tweakme move-chatbar-to-top off: place input fields at the default position below their chat windows.
 - /tweakme status: show the saved setting and pending changes.
@@ -25,7 +25,11 @@ The input position setting is independent of screen constraints and saved as Twe
 
 ## Verification
 
-Files and implementation were inspected. Automated Lua simulation was prepared but could not run: the existing temporary Lupa installation was unavailable and downloading a fresh runtime failed because network access was blocked. The user confirmed on October 11, 2026 that the addon works in the WoW Forever Beta client. Detailed compatibility checks remain pending.
+The version 0.2.1 temporary Lupa simulation passed toggling, repeated on, originally hidden scrollbars, latest Show/Hide/SetShown requests, clamp restoration, new windows and combat deferral. The user confirmed on October 11, 2026 that scrollbar hiding works in game. Detailed compatibility checks remain pending.
+
+Version 0.2.1 also hides standard chat scrollbars while remove-chatwindow-move-limit is on. Guarded secure hooks preserve the latest Show, Hide or SetShown request for restoration on off, including originally hidden bars. New and temporary chat windows share the existing discovery and combat deferral. Scrollbar anchors and chat input alignment remain unchanged. Detailed in-game checks of restoration, layout updates, new windows and combat deferral remain pending.
+
+Files and implementation were inspected. The initial automated Lua simulation could not run: the existing temporary Lupa installation was unavailable and downloading a fresh runtime failed because network access was blocked. A temporary runtime became available for the version 0.2.1 checks described above. The user confirmed on October 11, 2026 that the addon works in the WoW Forever Beta client. Detailed compatibility checks remain pending.
 
 In-game checks: enable on, open Edit Mode, move chat to each edge and partly beyond it, save, reopen Edit Mode, test /reload, and switch off to check normal constraints. Also test undocked/new windows, repeated on/off, invalid arguments and changes during combat.
 
