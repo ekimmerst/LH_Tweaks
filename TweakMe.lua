@@ -5,6 +5,14 @@ local editStates = {}
 local scrollStates = {}
 local chatBarApplied = false
 local initialized, applied, pending = false, false, false
+local locationState
+local locationReset = false
+
+local function ValidLocation(position)
+    return type(position) == "table" and type(position.x) == "number" and type(position.y) == "number"
+        and position.x == position.x and position.y == position.y
+        and math.abs(position.x) < 10 and math.abs(position.y) < 10
+end
 
 local function Print(message)
     DEFAULT_CHAT_FRAME:AddMessage("|cff33ff99TweakMe|r: " .. message)
@@ -12,6 +20,81 @@ end
 
 local function InCombat()
     return InCombatLockdown and InCombatLockdown()
+end
+
+local function ApplyLocationBar()
+    local cluster = MinimapCluster
+    local zone = cluster and cluster.ZoneTextButton
+    if not zone then
+        if TweakMeDB.locationBar or TweakMeDB.locationBarPosition or locationReset then pending = true end
+        return
+    end
+    if not locationState and not (TweakMeDB.locationBar or TweakMeDB.locationBarPosition) then
+        locationReset = false
+        return
+    end
+    if not locationState then
+        -- On older layouts the header artwork is the common anchor; Camelot uses the zone button itself.
+        local _, relative = zone:GetPoint(1)
+        local bar = cluster.BorderTop and relative == cluster.BorderTop and cluster.BorderTop or zone
+        local state = { bar = bar, points = {}, movable = bar:IsMovable(), userPlaced = bar:IsUserPlaced() }
+        locationState = state
+        for i = 1, bar:GetNumPoints() do state.points[i] = { bar:GetPoint(i) } end
+        local handle = CreateFrame("Frame", nil, zone)
+        state.handle = handle
+        handle:SetAllPoints(zone)
+        handle:SetFrameLevel(zone:GetFrameLevel() + 5)
+        handle:EnableMouse(true)
+        handle:RegisterForDrag("LeftButton")
+        handle:SetScript("OnDragStart", function()
+            if InCombat() or not TweakMeDB.locationBar then return end
+            state.dragging = true
+            bar:StartMoving()
+        end)
+        local function StopDrag()
+            if not state.dragging then return end
+            if InCombat() then pending = true; return end
+            state.busy = true
+            bar:StopMovingOrSizing()
+            state.dragging = false
+            local x, y = bar:GetCenter()
+            if x and y then
+                local scale = bar:GetEffectiveScale() / UIParent:GetEffectiveScale()
+                TweakMeDB.locationBarPosition = { x = x * scale / UIParent:GetWidth(), y = y * scale / UIParent:GetHeight() }
+            end
+            state.busy = false
+            ApplyLocationBar()
+        end
+        state.stop = StopDrag
+        handle:SetScript("OnDragStop", StopDrag)
+        handle:SetScript("OnHide", StopDrag)
+        local function EnforceLocation()
+            if state.busy or state.dragging or not TweakMeDB.locationBarPosition then return end
+            if InCombat() then pending = true; return end
+            ApplyLocationBar()
+        end
+        hooksecurefunc(bar, "SetPoint", EnforceLocation)
+        hooksecurefunc(bar, "ClearAllPoints", EnforceLocation)
+    end
+    local state = locationState
+    if state.dragging then state.stop() end
+    state.busy = true
+    local bar = state.bar
+    if locationReset then
+        TweakMeDB.locationBarPosition = nil
+        bar:ClearAllPoints()
+        for _, point in ipairs(state.points) do bar:SetPoint(unpack(point)) end
+        bar:SetUserPlaced(state.userPlaced)
+        locationReset = false
+    elseif TweakMeDB.locationBarPosition then
+        local position = TweakMeDB.locationBarPosition
+        local scale = UIParent:GetEffectiveScale() / bar:GetEffectiveScale()
+        bar:ClearAllPoints()
+        bar:SetPoint("CENTER", UIParent, "BOTTOMLEFT", position.x * UIParent:GetWidth() * scale, position.y * UIParent:GetHeight() * scale)
+    end
+    bar:SetMovable(TweakMeDB.locationBar or state.movable)
+    state.handle:SetShown(TweakMeDB.locationBar)
+    state.busy = false
 end
 
 local function DiscoverFrames()
@@ -139,6 +222,7 @@ Apply = function()
     if not initialized then return end
     if InCombat() then pending = true; return end
     pending = false
+    ApplyLocationBar()
     applied = TweakMeDB.chatWindow == true
     InstallFunctionHooks()
     local frames = DiscoverFrames()
@@ -216,6 +300,7 @@ local function AutoRepair()
 end
 
 local function Help()
+    Print("/tweakme unlock-location-bar on|off|reset - drag the location bar with its attached buttons, lock it in place, or restore its original position.")
     Print("/tweakme all on|off - enable or disable all tweaks; merchant actions start on the next visit.")
     Print("/tweakme remove-chatwindow-move-limit on - allow standard chat windows to move beyond the screen edges and hide their scrollbars.")
     Print("/tweakme remove-chatwindow-move-limit off - restore normal screen constraints and scrollbar visibility.")
@@ -238,14 +323,25 @@ SlashCmdList.TWEAKME = function(message)
         Print("move-chatbar-to-top: " .. (TweakMeDB.moveChatBarToTop and "on" or "off") .. (pending and " (pending)" or ""))
         Print("auto-repair: " .. (TweakMeDB.autoRepair and "on" or "off"))
         Print("auto-sell-greys: " .. (TweakMeDB.autoSellGreys and "on" or "off"))
+        Print("unlock-location-bar: " .. (TweakMeDB.locationBar and "on" or "off") .. (pending and " (pending)" or ""))
     elseif command == "all" and (value == "on" or value == "off") and extra == "" then
         local enabled = value == "on"
         TweakMeDB.chatWindow = enabled
         TweakMeDB.moveChatBarToTop = enabled
         TweakMeDB.autoRepair = enabled
         TweakMeDB.autoSellGreys = enabled
+        TweakMeDB.locationBar = enabled
         Apply()
-        Print("All tweaks: " .. value .. (pending and " (chat changes pending; apply after combat or when chat frames load)" or ""))
+        Print("All tweaks: " .. value .. (pending and " (layout changes pending; apply after combat or when UI frames load)" or ""))
+    elseif command == "unlock-location-bar" and (value == "on" or value == "off" or value == "reset") and extra == "" then
+        if value == "reset" then
+            TweakMeDB.locationBarPosition = nil
+            locationReset = true
+        else
+            TweakMeDB.locationBar = value == "on"
+        end
+        Apply()
+        Print("unlock-location-bar: " .. value .. (pending and " (pending; applies after combat or when the location bar loads)" or ""))
     elseif command == "auto-sell-greys" and (value == "on" or value == "off") and extra == "" then
         TweakMeDB.autoSellGreys = value == "on"
         Print("auto-sell-greys: " .. value)
@@ -276,6 +372,8 @@ events:SetScript("OnEvent", function(_, event, name)
         TweakMeDB.moveChatBarToTop = TweakMeDB.moveChatBarToTop == true
         TweakMeDB.autoRepair = TweakMeDB.autoRepair == true
         TweakMeDB.autoSellGreys = TweakMeDB.autoSellGreys == true
+        TweakMeDB.locationBar = TweakMeDB.locationBar == true
+        if not ValidLocation(TweakMeDB.locationBarPosition) then TweakMeDB.locationBarPosition = nil end
         initialized = true
     end
     if event == "MERCHANT_SHOW" then
