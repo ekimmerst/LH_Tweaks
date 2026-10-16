@@ -7,6 +7,60 @@ local chatBarApplied = false
 local initialized, applied, pending = false, false, false
 local locationState
 local locationReset = false
+local worldReady = false
+
+local function UpdateLocationLayout(state, detached)
+    local cluster = MinimapCluster
+    if detached and not state.layout then
+        -- Keep the header's original footprint in ResizeLayoutFrame. Otherwise a
+        -- distant header enlarges the right-anchored cluster and shifts the map.
+        local candidates = { cluster:GetChildren() }
+        local affected = { [state.bar] = true }
+        local changed = true
+        while changed do
+            changed = false
+            for _, frame in ipairs(candidates) do
+                if not affected[frame] and frame ~= cluster.MinimapContainer then
+                    for i = 1, frame:GetNumPoints() do
+                        local _, relative = frame:GetPoint(i)
+                        if affected[relative] then affected[frame] = true; changed = true; break end
+                    end
+                end
+            end
+        end
+        state.layout = {}
+        local replacements = {}
+        for _, frame in ipairs(candidates) do
+            if affected[frame] then
+                local proxy = CreateFrame("Frame", nil, cluster)
+                proxy:Hide()
+                proxy.includeAsLayoutChildWhenHidden = frame:IsShown() or frame.includeAsLayoutChildWhenHidden
+                proxy.ignoreInLayout = frame.ignoreInLayout
+                proxy:SetSize(frame:GetSize())
+                proxy:SetScale(frame:GetScale())
+                replacements[frame] = proxy
+                state.layout[#state.layout + 1] = { frame = frame, proxy = proxy, ignore = frame.ignoreInLayout }
+            end
+        end
+        for _, entry in ipairs(state.layout) do
+            for i = 1, entry.frame:GetNumPoints() do
+                local point, relative, relativePoint, x, y = entry.frame:GetPoint(i)
+                entry.proxy:SetPoint(point, replacements[relative] or relative, relativePoint, x, y)
+            end
+            entry.frame.ignoreInLayout = true
+        end
+    elseif not detached and state.layout then
+        for _, entry in ipairs(state.layout) do
+            entry.frame.ignoreInLayout = entry.ignore
+            entry.proxy.ignoreInLayout = true
+            entry.proxy.includeAsLayoutChildWhenHidden = nil
+            entry.proxy:ClearAllPoints()
+            entry.proxy:SetParent(nil)
+        end
+        state.layout = nil
+    end
+    if cluster.MarkDirty then cluster:MarkDirty() end
+end
 
 local function ValidLocation(position)
     return type(position) == "table" and type(position.x) == "number" and type(position.y) == "number"
@@ -22,7 +76,17 @@ local function InCombat()
     return InCombatLockdown and InCombatLockdown()
 end
 
+local function RestoreUserPlaced(frame, placed)
+    if frame:IsUserPlaced() == placed then return end
+    -- SetUserPlaced requires a movable or resizable frame, even when clearing it.
+    local movable = frame:IsMovable()
+    if not movable then frame:SetMovable(true) end
+    frame:SetUserPlaced(placed)
+    if not movable then frame:SetMovable(false) end
+end
+
 local function ApplyLocationBar()
+    if not worldReady then pending = true; return end
     local cluster = MinimapCluster
     local zone = cluster and cluster.ZoneTextButton
     if not zone then
@@ -48,6 +112,7 @@ local function ApplyLocationBar()
         handle:RegisterForDrag("LeftButton")
         handle:SetScript("OnDragStart", function()
             if InCombat() or not TweakMeDB.locationBar then return end
+            UpdateLocationLayout(state, true)
             state.dragging = true
             bar:StartMoving()
         end)
@@ -84,9 +149,11 @@ local function ApplyLocationBar()
         TweakMeDB.locationBarPosition = nil
         bar:ClearAllPoints()
         for _, point in ipairs(state.points) do bar:SetPoint(unpack(point)) end
-        bar:SetUserPlaced(state.userPlaced)
+        RestoreUserPlaced(bar, state.userPlaced)
+        UpdateLocationLayout(state, false)
         locationReset = false
     elseif TweakMeDB.locationBarPosition then
+        UpdateLocationLayout(state, true)
         local position = TweakMeDB.locationBarPosition
         local scale = UIParent:GetEffectiveScale() / bar:GetEffectiveScale()
         bar:ClearAllPoints()
@@ -222,6 +289,18 @@ Apply = function()
     if not initialized then return end
     if InCombat() then pending = true; return end
     pending = false
+    if worldReady and TweakMeDB.minimapPositionRepair ~= 1 then
+        if MinimapCluster and MinimapCluster.MinimapContainer then
+            -- One-time repair for the location-bar layout bug in 0.6.0/0.6.1.
+            MinimapCluster:ClearAllPoints()
+            MinimapCluster:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", 0, 0)
+            RestoreUserPlaced(MinimapCluster, false)
+            if MinimapCluster.MarkDirty then MinimapCluster:MarkDirty() end
+            TweakMeDB.minimapPositionRepair = 1
+        else
+            pending = true
+        end
+    end
     ApplyLocationBar()
     applied = TweakMeDB.chatWindow == true
     InstallFunctionHooks()
@@ -366,6 +445,7 @@ for _, event in ipairs({"ADDON_LOADED", "PLAYER_LOGIN", "PLAYER_ENTERING_WORLD",
     events:RegisterEvent(event)
 end
 events:SetScript("OnEvent", function(_, event, name)
+    if event == "PLAYER_ENTERING_WORLD" then worldReady = true end
     if event == "ADDON_LOADED" and name == addonName then
         if type(TweakMeDB) ~= "table" then TweakMeDB = {} end
         TweakMeDB.chatWindow = TweakMeDB.chatWindow == true

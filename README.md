@@ -33,6 +33,20 @@ All features are off by default, and your choices and location-bar position are 
 
 Use Edit Mode to move the main chat window. Chat and location-bar layout changes made during combat take effect after combat ends; dragging is unavailable during combat. Automatic repairs and sales begin on your next merchant visit.
 
+## Version 0.6.3
+
+Fixed an invalid `SetUserPlaced(false)` call on a non-movable minimap cluster during the one-time repair. This Lua error could interrupt layout commands, leaving their text in the chat input after pressing Enter. The repair and location-bar reset now temporarily enable movement only when changing the user-placed flag, then restore the previous movement state.
+
+The stricter Lupa regression test reproduced the invalid call before the fix and passes with the fix, including resetting a locked location bar and preserving the minimap's movement state. On October 16, 2026, the user confirmed in game that the reported command/Enter issue is resolved. Detailed compatibility checks remain pending.
+
+## Version 0.6.2
+
+Fixed the minimap shifting left after reloading with a saved location-bar position. The detached header and its attached frames no longer enlarge the minimap's automatic layout bounds; hidden placeholders preserve their original footprint. Location-bar restoration waits until entering the world.
+
+On the first world entry after this update, TweakMe resets the minimap cluster to the standard top-right anchor, deferring during combat. This repair runs once per character (`TweakMeDB.minimapPositionRepair`); later minimap positioning remains independent. Saved location-bar positions are preserved.
+
+The Lupa regression simulation in `.location-layout-test.py` passed saved-position restoration, dragging, locking, reset, repeated dragging, attached-frame layout isolation, one-time minimap repair and startup/combat deferral. In-game reload verification is pending.
+
 ## Version 0.6.1
 
 Renamed the command to `unlock-location-bar on|off|reset` without an old-command alias. Existing per-character settings and positions are preserved. Help, status and command feedback use the new name.
