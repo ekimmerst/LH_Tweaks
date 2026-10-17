@@ -6,6 +6,7 @@ TweakMe adds simple quality-of-life tweaks to WoW Forever Beta: customize your c
 
 - Move standard chat windows to and beyond the screen edges and hide their scrollbars.
 - Place the chat input above the chat window.
+- Reposition the default tooltip using a small circle at its bottom-right corner.
 - Move the location bar independently of the minimap, together with its attached tracking, calendar and other buttons.
 - Automatically repair at repair-capable merchants using your own money, when you can afford the full cost.
 - Automatically sell grey (poor-quality) items from your bags when visiting a merchant.
@@ -20,6 +21,9 @@ Type `/tweakme all on` to enable all features, or choose individual tweaks:
 | `/tweakme remove-chatwindow-move-limit on` | Allow chat windows beyond the screen edges and hide scrollbars. |
 | `/tweakme move-chatbar-to-top on` | Move chat input above the chat window. |
 | `/tweakme unlock-location-bar on` | Unlock the location bar; drag its zone-name area with the left mouse button. |
+| `/tweakme unlock-tooltip on` | Show a small circle at the tooltip's bottom-right corner; drag it with the left mouse button. |
+| `/tweakme unlock-tooltip off` | Hide the circle and lock the tooltip at the chosen position. |
+| `/tweakme unlock-tooltip reset` | Forget the saved position and restore Blizzard's default anchor; keep the current lock setting. |
 | `/tweakme unlock-location-bar off` | Lock the location bar at its current position. |
 | `/tweakme unlock-location-bar reset` | Restore its original anchors and forget its saved position; keep the current lock setting. |
 | `/tweakme auto-repair on` | Enable automatic repairs. |
@@ -27,11 +31,17 @@ Type `/tweakme all on` to enable all features, or choose individual tweaks:
 | `/tweakme status` | Show your current settings. |
 | `/tweakme help` | Show all commands. |
 
-Replace `on` with `off` to disable any feature. Use `/tweakme all off` to disable them all, including locking the location bar at its current position. You can change individual settings at any time. Only `unlock-location-bar` accepts `reset`.
+Replace `on` with `off` to disable any feature. Use `/tweakme all off` to disable them all, including locking the location bar and tooltip at their chosen positions. You can change individual settings at any time. Both `unlock-location-bar` and `unlock-tooltip` accept `reset`.
 
-All features are off by default, and your choices and location-bar position are saved for each character. While unlocked, the drag area covers the zone-name button; lock it again to use that button normally. Attached buttons keep their existing anchors and click behavior. The minimap stays in place. Reset restores the anchors captured before TweakMe first moved the bar in the current session, relative to the minimap's current layout.
+All features are off by default, and your choices, location-bar position and tooltip position are saved for each character. While unlocked, the drag area covers the zone-name button; lock it again to use that button normally. Attached buttons keep their existing anchors and click behavior. The minimap stays in place. Reset restores the anchors captured before TweakMe first moved the bar in the current session, relative to the minimap's current layout.
 
 Use Edit Mode to move the main chat window. Chat and location-bar layout changes made during combat take effect after combat ends; dragging is unavailable during combat. Automatic repairs and sales begin on your next merchant visit.
+
+## Version 0.7.0
+
+Added `unlock-tooltip on|off|reset`, included in `all on|off`, help and status. The drag circle remains available while unlocked even when the tooltip is hidden. Positions are saved per character as `tooltipPosition`, with the unlock setting in `unlockTooltip`. The default tooltip stays anchored by its bottom-right corner and grows upward and leftward. Tooltips explicitly anchored to individual controls retain their normal behavior; the saved position applies through Blizzard's default-anchor function. Layout changes and dragging are deferred or blocked during combat. Reset restores Blizzard's current default anchor without changing the lock setting. On October 17, 2026, the user confirmed that unlock-tooltip works in game. Detailed compatibility checks remain pending.
+
+The Lupa simulation in `.tooltip-test.py` passed dragging, locking, reset, bottom-right anchoring, command validation, combat deferral, bulk toggles and saved-position reload. The existing location-layout regression simulation also passed.
 
 ## Version 0.6.3
 

@@ -8,6 +8,7 @@ local initialized, applied, pending = false, false, false
 local locationState
 local locationReset = false
 local worldReady = false
+local tooltipState, tooltipReset
 
 local function UpdateLocationLayout(state, detached)
     local cluster = MinimapCluster
@@ -164,6 +165,95 @@ local function ApplyLocationBar()
     state.busy = false
 end
 
+local function ApplyTooltip()
+    if not worldReady then pending = true; return end
+    if not GameTooltip or type(GameTooltip_SetDefaultAnchor) ~= "function" then
+        if TweakMeDB.unlockTooltip or TweakMeDB.tooltipPosition then pending = true end
+        return
+    end
+    if not tooltipState and not (TweakMeDB.unlockTooltip or TweakMeDB.tooltipPosition) then
+        tooltipReset = nil
+        return
+    end
+    if not tooltipState then
+        local state = {}
+        tooltipState = state
+        local handle = CreateFrame("Frame", nil, UIParent)
+        state.handle = handle
+        handle:SetSize(16, 16)
+        handle:SetFrameStrata("TOOLTIP")
+        handle:SetClampedToScreen(true)
+        handle:SetMovable(true)
+        handle:EnableMouse(true)
+        handle:RegisterForDrag("LeftButton")
+        local circle = handle:CreateTexture(nil, "OVERLAY")
+        circle:SetAllPoints()
+        circle:SetTexture("Interface\\COMMON\\Indicator-Gray")
+        circle:SetVertexColor(0.2, 1, 0.6)
+        state.position = function(tooltip)
+            if InCombat() then pending = true; return end
+            local position = TweakMeDB.tooltipPosition
+            if position then
+                local scale = UIParent:GetEffectiveScale() / tooltip:GetEffectiveScale()
+                tooltip:ClearAllPoints()
+                tooltip:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMLEFT",
+                    position.x * UIParent:GetWidth() * scale, position.y * UIParent:GetHeight() * scale)
+            end
+            if tooltip == GameTooltip and not state.dragging then
+                local x, y = tooltip:GetRight(), tooltip:GetBottom()
+                if x and y then
+                    local scale = tooltip:GetEffectiveScale() / UIParent:GetEffectiveScale()
+                    handle:ClearAllPoints()
+                    handle:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x * scale, y * scale)
+                end
+            end
+        end
+        hooksecurefunc("GameTooltip_SetDefaultAnchor", state.position)
+        handle:SetScript("OnDragStart", function()
+            if InCombat() or not TweakMeDB.unlockTooltip then return end
+            state.dragging = true
+            handle:StartMoving()
+        end)
+        state.stop = function()
+            if not state.dragging then return end
+            handle:StopMovingOrSizing()
+            state.dragging = false
+            local x, y = handle:GetCenter()
+            if x and y then
+                TweakMeDB.tooltipPosition = { x = x / UIParent:GetWidth(), y = y / UIParent:GetHeight() }
+            end
+            if InCombat() then pending = true else state.position(GameTooltip) end
+        end
+        handle:SetScript("OnDragStop", state.stop)
+        handle:SetScript("OnHide", state.stop)
+        handle:SetScript("OnUpdate", function()
+            if not state.dragging then return end
+            if InCombat() then state.stop(); return end
+            local x, y = handle:GetCenter()
+            if not x or not y then return end
+            local scale = UIParent:GetEffectiveScale() / GameTooltip:GetEffectiveScale()
+            GameTooltip:ClearAllPoints()
+            GameTooltip:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMLEFT", x * scale, y * scale)
+        end)
+    end
+    local state = tooltipState
+    if state.dragging then state.stop() end
+    if tooltipReset then
+        TweakMeDB.tooltipPosition = nil
+        tooltipReset = nil
+        GameTooltip_SetDefaultAnchor(GameTooltip, GameTooltip:GetOwner() or UIParent)
+    elseif TweakMeDB.tooltipPosition then
+        state.position(GameTooltip)
+    elseif state.handle:GetNumPoints() == 0 then
+        if GameTooltip:IsShown() and GameTooltip:GetRight() then
+            state.position(GameTooltip)
+        else
+            GameTooltip_SetDefaultAnchor(GameTooltip, GameTooltip:GetOwner() or UIParent)
+        end
+    end
+    state.handle:SetShown(TweakMeDB.unlockTooltip)
+end
+
 local function DiscoverFrames()
     local frames, seen = {}, {}
     local function Add(frame)
@@ -302,6 +392,7 @@ Apply = function()
         end
     end
     ApplyLocationBar()
+    ApplyTooltip()
     applied = TweakMeDB.chatWindow == true
     InstallFunctionHooks()
     local frames = DiscoverFrames()
@@ -379,6 +470,7 @@ local function AutoRepair()
 end
 
 local function Help()
+    Print("/tweakme unlock-tooltip on|off|reset - drag the bottom-right circle, lock the tooltip, or restore its default position.")
     Print("/tweakme unlock-location-bar on|off|reset - drag the location bar with its attached buttons, lock it in place, or restore its original position.")
     Print("/tweakme all on|off - enable or disable all tweaks; merchant actions start on the next visit.")
     Print("/tweakme remove-chatwindow-move-limit on - allow standard chat windows to move beyond the screen edges and hide their scrollbars.")
@@ -403,6 +495,7 @@ SlashCmdList.TWEAKME = function(message)
         Print("auto-repair: " .. (TweakMeDB.autoRepair and "on" or "off"))
         Print("auto-sell-greys: " .. (TweakMeDB.autoSellGreys and "on" or "off"))
         Print("unlock-location-bar: " .. (TweakMeDB.locationBar and "on" or "off") .. (pending and " (pending)" or ""))
+        Print("unlock-tooltip: " .. (TweakMeDB.unlockTooltip and "on" or "off") .. (pending and " (pending)" or ""))
     elseif command == "all" and (value == "on" or value == "off") and extra == "" then
         local enabled = value == "on"
         TweakMeDB.chatWindow = enabled
@@ -410,6 +503,7 @@ SlashCmdList.TWEAKME = function(message)
         TweakMeDB.autoRepair = enabled
         TweakMeDB.autoSellGreys = enabled
         TweakMeDB.locationBar = enabled
+        TweakMeDB.unlockTooltip = enabled
         Apply()
         Print("All tweaks: " .. value .. (pending and " (layout changes pending; apply after combat or when UI frames load)" or ""))
     elseif command == "unlock-location-bar" and (value == "on" or value == "off" or value == "reset") and extra == "" then
@@ -421,6 +515,15 @@ SlashCmdList.TWEAKME = function(message)
         end
         Apply()
         Print("unlock-location-bar: " .. value .. (pending and " (pending; applies after combat or when the location bar loads)" or ""))
+    elseif command == "unlock-tooltip" and (value == "on" or value == "off" or value == "reset") and extra == "" then
+        if value == "reset" then
+            tooltipReset = true
+            TweakMeDB.tooltipPosition = nil
+        else
+            TweakMeDB.unlockTooltip = value == "on"
+        end
+        Apply()
+        Print("unlock-tooltip: " .. value .. (pending and " (pending; applies after combat or when the tooltip loads)" or ""))
     elseif command == "auto-sell-greys" and (value == "on" or value == "off") and extra == "" then
         TweakMeDB.autoSellGreys = value == "on"
         Print("auto-sell-greys: " .. value)
@@ -453,6 +556,8 @@ events:SetScript("OnEvent", function(_, event, name)
         TweakMeDB.autoRepair = TweakMeDB.autoRepair == true
         TweakMeDB.autoSellGreys = TweakMeDB.autoSellGreys == true
         TweakMeDB.locationBar = TweakMeDB.locationBar == true
+        TweakMeDB.unlockTooltip = TweakMeDB.unlockTooltip == true
+        if not ValidLocation(TweakMeDB.tooltipPosition) then TweakMeDB.tooltipPosition = nil end
         if not ValidLocation(TweakMeDB.locationBarPosition) then TweakMeDB.locationBarPosition = nil end
         initialized = true
     end
