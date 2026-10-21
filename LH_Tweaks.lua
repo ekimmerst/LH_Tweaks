@@ -4,6 +4,7 @@ local functionHooks = {}
 local editStates = {}
 local scrollStates = {}
 local chatBarApplied = false
+local chatFrameStates = {}
 local initialized, applied, pending = false, false, false
 local locationState
 local locationReset = false
@@ -299,6 +300,55 @@ local function PositionChatBar(editBox, state)
     state.busy = false
 end
 
+local function ApplyChatBarFrame(editBox)
+    local enabled = LH_TweaksDB.replaceChatBarFrame == true
+    local state = chatFrameStates[editBox]
+    if not state and not enabled then return end
+    if not state then
+        state = { regions = {} }
+        chatFrameStates[editBox] = state
+        local frame = CreateFrame("Frame", nil, editBox, "BackdropTemplate")
+        state.frame = frame
+        frame:EnableMouse(false)
+        frame:SetAllPoints(editBox)
+        frame:SetFrameLevel(math.max(0, editBox:GetFrameLevel() - 1))
+        frame:SetBackdrop({
+            bgFile = "Interface\\Buttons\\WHITE8X8",
+            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+            tile = false, edgeSize = 8,
+            insets = { left = 2, right = 2, top = 2, bottom = 2 },
+        })
+        frame:SetBackdropColor(0, 0, 0, 1)
+        frame:SetBackdropBorderColor(0.65, 0.59, 0.45, 1)
+    end
+    state.enabled = enabled
+    local name = editBox:GetName()
+    -- Only replace border artwork, leaving text, headers and focus untouched.
+    for _, suffix in ipairs({ "Left", "Mid", "Right", "FocusLeft", "FocusMid", "FocusRight" }) do
+        local key = suffix:sub(1, 1):lower() .. suffix:sub(2)
+        local region = editBox[key] or editBox[suffix] or (name and _G[name .. suffix])
+        if region and not state.regions[region] and enabled then
+            local data = { alpha = region:GetAlpha() }
+            state.regions[region] = data
+            hooksecurefunc(region, "SetAlpha", function(self, alpha)
+                if data.busy then return end
+                data.alpha = alpha
+                if state.enabled then
+                    data.busy = true
+                    self:SetAlpha(0)
+                    data.busy = false
+                end
+            end)
+        end
+    end
+    for region, data in pairs(state.regions) do
+        data.busy = true
+        region:SetAlpha(enabled and 0 or data.alpha)
+        data.busy = false
+    end
+    state.frame:SetShown(enabled)
+end
+
 local function ApplyChatBars(frames)
     chatBarApplied = LH_TweaksDB.moveChatBarToTop == true
     local foundPrimary = false
@@ -319,9 +369,10 @@ local function ApplyChatBars(frames)
             end
             state.chat = chat
             PositionChatBar(editBox, state)
+            ApplyChatBarFrame(editBox)
         end
     end
-    if chatBarApplied and not foundPrimary then pending = true end
+    if (chatBarApplied or LH_TweaksDB.replaceChatBarFrame) and not foundPrimary then pending = true end
 end
 
 local function ApplyScrollBars(frames)
@@ -470,6 +521,7 @@ local function AutoRepair()
 end
 
 local function Help()
+    Print("/lh_tweaks replace-chatbar-frame on|off - use the LH_ExpBar border for chat input, or restore the standard border.")
     Print("/lh_tweaks unlock-tooltip on|off|reset - drag the bottom-right circle, lock the tooltip, or restore its default position.")
     Print("/lh_tweaks unlock-location-bar on|off|reset - drag the location bar with its attached buttons, lock it in place, or restore its original position.")
     Print("/lh_tweaks all on|off - enable or disable all tweaks; merchant actions start on the next visit.")
@@ -492,6 +544,7 @@ SlashCmdList.LH_TWEAKS = function(message)
     elseif command == "status" and value == "" and extra == "" then
         Print("remove-chatwindow-move-limit: " .. (LH_TweaksDB.chatWindow and "on" or "off") .. (pending and " (pending)" or ""))
         Print("move-chatbar-to-top: " .. (LH_TweaksDB.moveChatBarToTop and "on" or "off") .. (pending and " (pending)" or ""))
+        Print("replace-chatbar-frame: " .. (LH_TweaksDB.replaceChatBarFrame and "on" or "off") .. (pending and " (pending)" or ""))
         Print("auto-repair: " .. (LH_TweaksDB.autoRepair and "on" or "off"))
         Print("auto-sell-greys: " .. (LH_TweaksDB.autoSellGreys and "on" or "off"))
         Print("unlock-location-bar: " .. (LH_TweaksDB.locationBar and "on" or "off") .. (pending and " (pending)" or ""))
@@ -500,6 +553,7 @@ SlashCmdList.LH_TWEAKS = function(message)
         local enabled = value == "on"
         LH_TweaksDB.chatWindow = enabled
         LH_TweaksDB.moveChatBarToTop = enabled
+        LH_TweaksDB.replaceChatBarFrame = enabled
         LH_TweaksDB.autoRepair = enabled
         LH_TweaksDB.autoSellGreys = enabled
         LH_TweaksDB.locationBar = enabled
@@ -530,6 +584,10 @@ SlashCmdList.LH_TWEAKS = function(message)
     elseif command == "auto-repair" and (value == "on" or value == "off") and extra == "" then
         LH_TweaksDB.autoRepair = value == "on"
         Print("auto-repair: " .. value)
+    elseif command == "replace-chatbar-frame" and (value == "on" or value == "off") and extra == "" then
+        LH_TweaksDB.replaceChatBarFrame = value == "on"
+        Apply()
+        Print("replace-chatbar-frame: " .. value .. (pending and " (pending; applies after combat or when chat frames load)" or ""))
     elseif command == "move-chatbar-to-top" and (value == "on" or value == "off") and extra == "" then
         LH_TweaksDB.moveChatBarToTop = value == "on"
         Apply()
@@ -553,6 +611,7 @@ events:SetScript("OnEvent", function(_, event, name)
         if type(LH_TweaksDB) ~= "table" then LH_TweaksDB = {} end
         LH_TweaksDB.chatWindow = LH_TweaksDB.chatWindow == true
         LH_TweaksDB.moveChatBarToTop = LH_TweaksDB.moveChatBarToTop == true
+        LH_TweaksDB.replaceChatBarFrame = LH_TweaksDB.replaceChatBarFrame == true
         LH_TweaksDB.autoRepair = LH_TweaksDB.autoRepair == true
         LH_TweaksDB.autoSellGreys = LH_TweaksDB.autoSellGreys == true
         LH_TweaksDB.locationBar = LH_TweaksDB.locationBar == true

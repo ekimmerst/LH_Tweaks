@@ -2,7 +2,7 @@
 ## Title: LH_Tweaks
 ## Notes: Tweaks standard UI behavior using chat commands.
 ## Author: LH_Tweaks
-## Version: 0.7.1
+## Version: 0.8.0
 ## IconTexture: Interface\AddOns\LH_Tweaks\Icon.tga
 ## SavedVariablesPerCharacter: LH_TweaksDB
 

@@ -1,6 +1,6 @@
 # LH_Tweaks
 
-Version: 0.7.1
+Version: 0.8.0
 
 LH_Tweaks adds simple quality-of-life tweaks to WoW Forever Beta: customize your chat layout, reposition the location bar, repair automatically and sell grey items with less clicking.
 
@@ -8,6 +8,7 @@ LH_Tweaks adds simple quality-of-life tweaks to WoW Forever Beta: customize your
 
 - Move standard chat windows to and beyond the screen edges and hide their scrollbars.
 - Place the chat input above the chat window.
+- Replace the chat input border with LH_ExpBar's dark background and muted gold border.
 - Reposition the default tooltip using a small circle at its bottom-right corner.
 - Move the location bar independently of the minimap, together with its attached tracking, calendar and other buttons.
 - Automatically repair at repair-capable merchants using your own money, when you can afford the full cost.
@@ -21,6 +22,8 @@ Type `/lh_tweaks all on` to enable all features, or choose individual tweaks:
 | --- | --- |
 | `/lh_tweaks all on` | Enable all features. |
 | `/lh_tweaks remove-chatwindow-move-limit on` | Allow chat windows beyond the screen edges and hide scrollbars. |
+| `/lh_tweaks replace-chatbar-frame on` | Use the LH_ExpBar-style border for chat input. |
+| `/lh_tweaks replace-chatbar-frame off` | Restore the standard Blizzard chat input border. |
 | `/lh_tweaks move-chatbar-to-top on` | Move chat input above the chat window. |
 | `/lh_tweaks unlock-location-bar on` | Unlock the location bar; drag its zone-name area with the left mouse button. |
 | `/lh_tweaks unlock-tooltip on` | Show a small circle at the tooltip's bottom-right corner; drag it with the left mouse button. |
@@ -46,6 +49,12 @@ Place the `LH_Tweaks` folder in your game's `Interface/AddOns` folder. It must c
 When upgrading from TweakMe, replace the old folder and fully restart WoW. Do not enable both versions together. Commands now use `/lh_tweaks`.
 
 To retain your settings and saved positions, close WoW and back up each character's `WTF/Account/<account>/<realm>/<character>/SavedVariables/TweakMe.lua` file. Copy it to `LH_Tweaks.lua` in the same SavedVariables folder, then change `TweakMeDB` to `LH_TweaksDB` inside the copy. Copy the entire table, including `minimapPositionRepair`, to preserve its completed repair state. Migrate before first using the renamed addon; do not overwrite an existing `LH_Tweaks.lua` containing settings you want to keep. Without migration, features start disabled, saved positions are absent and the one-time minimap position repair runs again.
+
+## Version 0.8.0
+
+Added `replace-chatbar-frame on|off`, included in `all on|off`, help and status. The option defaults to off and is saved per character. It applies the same black background, border texture, size and muted gold color used by LH_ExpBar to standard chat input fields, including later-created chat windows. LH_ExpBar does not need to be enabled. Turning the option off restores the native border artwork, including focus textures. Changes made during combat take effect afterward.
+
+The user confirmed on October 21, 2026 that the chat input border option works in game.
 
 ## Version 0.7.1
 
