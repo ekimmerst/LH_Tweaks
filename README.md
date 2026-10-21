@@ -1,6 +1,6 @@
 # LH_Tweaks
 
-Version: 0.9.1
+Version: 0.9.2
 
 LH_Tweaks adds simple quality-of-life tweaks to WoW Forever Beta: customize your chat layout, reposition the location bar, repair automatically and sell grey items with less clicking.
 
@@ -20,7 +20,7 @@ Open **Settings > AddOns > LH Tweaks**. The **LiteHawk Tweaks** page uses Blizza
 
 Changes are saved per character and use the same settings as the chat commands. Layout changes wait until combat ends. **Reset position** restores the location bar or tooltip position while preserving its lock setting. **Enable all** and **Disable all** change every feature together. **Defaults** disables every feature and clears both saved positions; the completed minimap repair marker is retained.
 
-LH_Tweaks is the required core for the LiteHawk addon collection. Companion addons load after it. Their own configuration pages can be added beneath this category as they are implemented.
+LH_Tweaks is the required core for the LiteHawk addon collection. Companion addons load after it. Expand the LH Tweaks category to access module pages. LH HideMe provides its hiding controls as a native subpage. Additional module pages can be added as they are implemented.
 
 ## Leatrix Plus compatibility
 
@@ -63,6 +63,10 @@ Place the `LH_Tweaks` folder in your game's `Interface/AddOns` folder. It must c
 When upgrading from TweakMe, replace the old folder and fully restart WoW. Do not enable both versions together. Commands now use `/lh_tweaks`.
 
 To retain your settings and saved positions, close WoW and back up each character's `WTF/Account/<account>/<realm>/<character>/SavedVariables/TweakMe.lua` file. Copy it to `LH_Tweaks.lua` in the same SavedVariables folder, then change `TweakMeDB` to `LH_TweaksDB` inside the copy. Copy the entire table, including `minimapPositionRepair`, to preserve its completed repair state. Migrate before first using the renamed addon; do not overwrite an existing `LH_Tweaks.lua` containing settings you want to keep. Without migration, features start disabled, saved positions are absent and the one-time minimap position repair runs again.
+
+## Version 0.9.2
+
+Explicitly set the native AddOn-list group to LH_Tweaks so LH HideMe appears as a child under LH Tweaks. Its native settings subpage is available by expanding LH Tweaks.
 
 ## Version 0.9.1
 
