@@ -1,6 +1,6 @@
 # LH_Tweaks
 
-Version: 0.8.0
+Version: 0.9.1
 
 LH_Tweaks adds simple quality-of-life tweaks to WoW Forever Beta: customize your chat layout, reposition the location bar, repair automatically and sell grey items with less clicking.
 
@@ -13,6 +13,20 @@ LH_Tweaks adds simple quality-of-life tweaks to WoW Forever Beta: customize your
 - Move the location bar independently of the minimap, together with its attached tracking, calendar and other buttons.
 - Automatically repair at repair-capable merchants using your own money, when you can afford the full cost.
 - Automatically sell grey (poor-quality) items from your bags when visiting a merchant.
+
+## Configuration
+
+Open **Settings > AddOns > LH Tweaks**. The **LiteHawk Tweaks** page uses Blizzard's native settings controls, scrolling and right-aligned **Defaults** button. Sections cover Chat, Positioning and Merchants. All seven features are configurable here, including chat input borders, chat positioning, movement limits, location-bar and tooltip unlocking, automatic repairs and grey-item sales.
+
+Changes are saved per character and use the same settings as the chat commands. Layout changes wait until combat ends. **Reset position** restores the location bar or tooltip position while preserving its lock setting. **Enable all** and **Disable all** change every feature together. **Defaults** disables every feature and clears both saved positions; the completed minimap repair marker is retained.
+
+LH_Tweaks is the required core for the LiteHawk addon collection. Companion addons load after it. Their own configuration pages can be added beneath this category as they are implemented.
+
+## Leatrix Plus compatibility
+
+If **Leatrix Plus** is loaded and its automatic repair or junk-selling option is enabled, the corresponding LH Tweaks checkbox stays visible but is disabled, with the note **Already handled by Leatrix Plus**. Each function is checked separately. LH Tweaks also skips that merchant action, including when all features were enabled together. Leatrix Maps alone does not affect these options.
+
+Your existing LH Tweaks preferences are retained while Leatrix Plus handles the function. The control becomes available again when the corresponding Leatrix Plus option is disabled or Leatrix Plus is no longer loaded. Unknown or missing Leatrix settings do not disable LH Tweaks. The settings page reevaluates the detected state while open. Leatrix Plus settings are never modified.
 
 ## Commands
 
@@ -44,11 +58,21 @@ Use Edit Mode to move the main chat window. Chat and location-bar layout changes
 
 ## Installation and upgrade
 
-Place the `LH_Tweaks` folder in your game's `Interface/AddOns` folder. It must contain `LH_Tweaks.toc`, `LH_Tweaks.lua` and `Icon.tga`. Restart WoW and enable **LH_Tweaks** in the addon list.
+Place the `LH_Tweaks` folder in your game's `Interface/AddOns` folder. It must contain `LH_Tweaks.toc`, `LH_Tweaks.lua`, `Settings.lua` and `Icon.tga`. Restart WoW and enable **LH_Tweaks** in the addon list.
 
 When upgrading from TweakMe, replace the old folder and fully restart WoW. Do not enable both versions together. Commands now use `/lh_tweaks`.
 
 To retain your settings and saved positions, close WoW and back up each character's `WTF/Account/<account>/<realm>/<character>/SavedVariables/TweakMe.lua` file. Copy it to `LH_Tweaks.lua` in the same SavedVariables folder, then change `TweakMeDB` to `LH_TweaksDB` inside the copy. Copy the entire table, including `minimapPositionRepair`, to preserve its completed repair state. Migrate before first using the renamed addon; do not overwrite an existing `LH_Tweaks.lua` containing settings you want to keep. Without migration, features start disabled, saved positions are absent and the one-time minimap position repair runs again.
+
+## Version 0.9.1
+
+Added independent Leatrix Plus detection for automatic repairs and junk sales, disabled visible controls with explanatory notes, and duplicate-action prevention at merchants.
+
+The user confirmed normal in-game operation on October 21, 2026. Integration with an installed Leatrix Plus still requires in-game verification.
+
+## Version 0.9.0
+
+Added the native **LH Tweaks** settings category, headed **LiteHawk Tweaks**, with all seven feature controls, individual position resets, bulk controls and Defaults. UI and chat commands stay synchronized. Added the shared module-page registration API and made LH_Tweaks a required dependency of the LiteHawk companion addons. CurseForge release dependencies must additionally be configured when publishing; a TOC dependency controls loading but does not download missing addons.
 
 ## Version 0.8.0
 
@@ -87,3 +111,7 @@ Renamed the command to `unlock-location-bar on|off|reset` without an old-command
 ## Version 0.6.0
 
 Added `location-bar on|off|reset`, per-character position storage, combat deferral and integration with `all on|off` and `status`. A temporary Lupa simulation passed dragging, locking, reset, anchor enforcement, combat deferral, command validation, bulk toggles and saved-position reload. In-game verification, including attached-button behavior, is pending.
+
+## Addon icon
+
+The LH Tweaks icon uses the same gold, chamfered frame style as the **Spoken** addon icon, with large, high-contrast **LH** lettering in the center for readability at small sizes. The artwork was generated using Spoken's icon as the frame reference. Spoken is not required to display it. `Icon.png` contains the source artwork; `Icon.tga` is the bundled 256-by-256 game texture with transparency.

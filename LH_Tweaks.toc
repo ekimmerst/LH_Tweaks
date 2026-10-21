@@ -1,9 +1,10 @@
 ## Interface: 16001
-## Title: LH_Tweaks
-## Notes: Tweaks standard UI behavior using chat commands.
+## Title: LH Tweaks
+## Notes: LiteHawk Tweaks configuration hub and standard UI improvements.
 ## Author: LH_Tweaks
-## Version: 0.8.0
+## Version: 0.9.1
 ## IconTexture: Interface\AddOns\LH_Tweaks\Icon.tga
 ## SavedVariablesPerCharacter: LH_TweaksDB
 
 LH_Tweaks.lua
+Settings.lua

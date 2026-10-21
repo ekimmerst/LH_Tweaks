@@ -484,8 +484,19 @@ Apply = function()
     end
 end
 
+local function LeatrixHandles(key)
+    local option = key == "autoSellGreys" and "AutoSellJunk"
+        or key == "autoRepair" and "AutoRepairGear"
+    if not option then return false end
+    local isLoaded = C_AddOns and C_AddOns.IsAddOnLoaded or IsAddOnLoaded
+    if not isLoaded or not isLoaded("Leatrix_Plus") then return false end
+    local settings = _G.LeaPlusDB
+    if type(settings) ~= "table" then return false end
+    return settings[option] == "On" or settings[option] == true
+end
+
 local function AutoSellGreys()
-    if not LH_TweaksDB.autoSellGreys then return end
+    if not LH_TweaksDB.autoSellGreys or LeatrixHandles("autoSellGreys") then return end
     if C_MerchantFrame and C_MerchantFrame.SellAllJunkItems then
         C_MerchantFrame.SellAllJunkItems()
         return
@@ -509,7 +520,7 @@ local function AutoSellGreys()
 end
 
 local function AutoRepair()
-    if not LH_TweaksDB.autoRepair or not CanMerchantRepair() then return end
+    if not LH_TweaksDB.autoRepair or LeatrixHandles("autoRepair") or not CanMerchantRepair() then return end
     local cost, canRepair = GetRepairAllCost()
     if not canRepair or not cost or cost <= 0 then return end
     if GetMoney() < cost then
@@ -545,8 +556,8 @@ SlashCmdList.LH_TWEAKS = function(message)
         Print("remove-chatwindow-move-limit: " .. (LH_TweaksDB.chatWindow and "on" or "off") .. (pending and " (pending)" or ""))
         Print("move-chatbar-to-top: " .. (LH_TweaksDB.moveChatBarToTop and "on" or "off") .. (pending and " (pending)" or ""))
         Print("replace-chatbar-frame: " .. (LH_TweaksDB.replaceChatBarFrame and "on" or "off") .. (pending and " (pending)" or ""))
-        Print("auto-repair: " .. (LH_TweaksDB.autoRepair and "on" or "off"))
-        Print("auto-sell-greys: " .. (LH_TweaksDB.autoSellGreys and "on" or "off"))
+        Print("auto-repair: " .. (LeatrixHandles("autoRepair") and "already handled by Leatrix Plus" or LH_TweaksDB.autoRepair and "on" or "off"))
+        Print("auto-sell-greys: " .. (LeatrixHandles("autoSellGreys") and "already handled by Leatrix Plus" or LH_TweaksDB.autoSellGreys and "on" or "off"))
         Print("unlock-location-bar: " .. (LH_TweaksDB.locationBar and "on" or "off") .. (pending and " (pending)" or ""))
         Print("unlock-tooltip: " .. (LH_TweaksDB.unlockTooltip and "on" or "off") .. (pending and " (pending)" or ""))
     elseif command == "all" and (value == "on" or value == "off") and extra == "" then
@@ -579,9 +590,17 @@ SlashCmdList.LH_TWEAKS = function(message)
         Apply()
         Print("unlock-tooltip: " .. value .. (pending and " (pending; applies after combat or when the tooltip loads)" or ""))
     elseif command == "auto-sell-greys" and (value == "on" or value == "off") and extra == "" then
+        if value == "on" and LeatrixHandles("autoSellGreys") then
+            Print("Auto-sell greys is already handled by Leatrix Plus.")
+            return
+        end
         LH_TweaksDB.autoSellGreys = value == "on"
         Print("auto-sell-greys: " .. value)
     elseif command == "auto-repair" and (value == "on" or value == "off") and extra == "" then
+        if value == "on" and LeatrixHandles("autoRepair") then
+            Print("Auto-repair is already handled by Leatrix Plus.")
+            return
+        end
         LH_TweaksDB.autoRepair = value == "on"
         Print("auto-repair: " .. value)
     elseif command == "replace-chatbar-frame" and (value == "on" or value == "off") and extra == "" then
@@ -599,6 +618,43 @@ SlashCmdList.LH_TWEAKS = function(message)
     else
         Print("Invalid command. Use /lh_tweaks help.")
     end
+    if LH_Tweaks and LH_Tweaks.RefreshSettings then LH_Tweaks:RefreshSettings() end
+end
+
+-- Shared configuration host. Companion addons can register their own pages.
+LH_Tweaks = { modules = {} }
+local Hub = LH_Tweaks
+Hub.features = {
+    { key = "chatWindow", command = "remove-chatwindow-move-limit", section = "Chat", label = "Allow chat windows beyond screen edges", tooltip = "Remove movement limits and hide standard chat scrollbars." },
+    { key = "moveChatBarToTop", command = "move-chatbar-to-top", section = "Chat", label = "Move chat input above the chat window", tooltip = "Place the input field above the chat window instead of below it." },
+    { key = "replaceChatBarFrame", command = "replace-chatbar-frame", section = "Chat", label = "Replace the chat input border", tooltip = "Use the black background and muted gold border from LH_ExpBar. Disable to restore the Blizzard border." },
+    { key = "locationBar", command = "unlock-location-bar", section = "Positioning", label = "Unlock the location bar", tooltip = "Drag the zone-name area to move the location bar and its attached buttons. Disable to lock it at the saved position." },
+    { key = "unlockTooltip", command = "unlock-tooltip", section = "Positioning", label = "Unlock the default tooltip", tooltip = "Drag the small circle at the tooltip's bottom-right corner. Disable to lock the saved position." },
+    { key = "autoRepair", command = "auto-repair", section = "Merchants", label = "Automatically repair equipment", tooltip = "Repair at merchants using your own money when the full repair cost is affordable." },
+    { key = "autoSellGreys", command = "auto-sell-greys", section = "Merchants", label = "Automatically sell grey items", tooltip = "Sell poor-quality items from your bags on your next merchant visit." },
+}
+
+function Hub:IsReady() return initialized end
+function Hub:IsPending() return pending end
+function Hub:IsFeatureManaged(key) return LeatrixHandles(key) end
+function Hub:GetFeature(key)
+    return not LeatrixHandles(key) and LH_TweaksDB and LH_TweaksDB[key] == true or false
+end
+function Hub:RunCommand(command) SlashCmdList.LH_TWEAKS(command) end
+function Hub:RegisterModule(id, title, build)
+    assert(type(id) == "string" and type(title) == "string" and type(build) == "function", "Invalid LH Tweaks settings module")
+    if self.modules[id] then return end
+    self.modules[id] = { title = title, build = build }
+    if self.RegisterModulePage then self:RegisterModulePage(id) end
+end
+
+function Hub:RestoreDefaults()
+    if not initialized then return end
+    for _, feature in ipairs(self.features) do LH_TweaksDB[feature.key] = false end
+    LH_TweaksDB.locationBarPosition, LH_TweaksDB.tooltipPosition = nil, nil
+    locationReset, tooltipReset = true, true
+    Apply()
+    if self.RefreshSettings then self:RefreshSettings() end
 end
 
 local events = CreateFrame("Frame")

@@ -2,7 +2,7 @@
 
 - Communicate with the user in German. Keep addon messages, comments, metadata and documentation in English, consistent with LH_HideMe and LH_NameplateQuestInfo.
 - Work only in LH_Tweaks unless the user requests otherwise. Read LH_Tweaks.lua, LH_Tweaks.toc and README.md before changes.
-- Standalone WoW Forever Beta addon, interface 16001, version 0.8.0. Local Git repository on branch main; private GitHub repository ekimmerst/lh_tweaks configured as origin over HTTPS.
+- Standalone WoW Forever Beta addon, interface 16001, version 0.9.1. Local Git repository on branch main; private GitHub repository ekimmerst/lh_tweaks configured as origin over HTTPS.
 - Version 0.7.0 adds unlock-tooltip on|off|reset, included in all toggles, help and status. A 16px circle at the default tooltip's bottom-right corner remains visible while unlocked; left-drag saves a normalized per-character tooltipPosition. unlockTooltip defaults false; off hides the circle and preserves the position. Reset restores GameTooltip_SetDefaultAnchor and preserves the lock setting. A secure default-anchor hook reapplies saved positions; combat defers layout changes and blocks dragging. .tooltip-test.py passed default/off, circle creation, dragging, bottom-right anchoring, locking, reset, argument validation, combat deferral, bulk toggles and saved-position reload. .location-layout-test.py also passed. On October 17, 2026, the user confirmed that unlock-tooltip works in game. Detailed compatibility checks remain pending.
 - Version 0.6.3 guards SetUserPlaced calls in minimap repair and location reset: skip unchanged values; otherwise temporarily enable movement and restore its previous state. A stricter .location-layout-test.py reproduced the pre-fix error and passes after the fix, including locked-bar reset and movement-state preservation. The user confirmed on October 16, 2026 that the reported command/Enter issue is resolved in game; detailed compatibility checks remain pending.
 - Version 0.6.2 fixes minimap layout growth from detached location-bar frames. Exclude the moved header and anchor-dependent cluster children from ResizeLayoutFrame, preserving their original footprint with hidden layout placeholders. Restore ignoreInLayout values on reset. Wait until PLAYER_ENTERING_WORLD before restoring the bar. One-time per-character minimapPositionRepair = 1 resets MinimapCluster to TOPRIGHT of UIParent (0, 0), outside combat; do not repeat it on later world entries. Preserve the saved location-bar position. The .location-layout-test.py Lupa simulation passed saved-position restore, drag/off/reset/repeated drag bounds, attached-frame exclusion, one-time repair and startup/combat deferral. In-game verification is pending.
@@ -46,3 +46,27 @@
 - Region names and focus parent keys were inspected in the forever branch: https://raw.githubusercontent.com/Gethe/wow-ui-source/forever/Interface/AddOns/Blizzard_ChatFrameBase/Mainline/ChatFrameEditBox.xml .
 - Uses existing chat discovery and new/temporary-window hooks; missing primary input remains pending. Apply defers style changes and hook installation in combat.
 - .chatbar-frame-test.py, .location-layout-test.py and .tooltip-test.py passed. Simulation covers style, native/focus alpha restoration, input preservation, combat deferral, late chat windows, all on/off, invalid commands and saved mode. The user confirmed on October 21, 2026 that replace-chatbar-frame works in game. Detailed combat and compatibility checks remain pending.
+
+## Native settings and shared host (0.9.0)
+
+- Settings.lua loads after LH_Tweaks.lua. Registers the native vertical category LH Tweaks with section headers, proxy checkbox settings and native buttons, matching KelaGraphics's use of Blizzard settings controls without copying its proprietary code.
+- The root content heading is LiteHawk Tweaks, set by a scoped DisplayCategory post-hook. The native Defaults button is retained. Settings.CategoryDefaulted resets this category only; Settings.Defaulted resets it when all settings are defaulted. RestoreDefaults disables all seven features, resets both positions and preserves minimapPositionRepair. Combat uses existing deferred application.
+- LH_Tweaks.features defines UI labels, saved keys and existing slash commands. GUI setters invoke the same command path; slash commands notify native proxies. No secondary setting store exists.
+- LH_Tweaks:RegisterModule(id, title, build) queues or registers native subcategories. Companion addons require LH_Tweaks in their TOCs; avoid adding dependencies from the core back to companions.
+- CurseForge required project relationships must be configured at publication; TOC dependencies alone never download another addon. See RELEASE.md.
+- .settings-test.py and all three previous regression suites passed. Tests cover native category/title isolation, seven controls, synchronization, combat deferral, scoped defaults, position resets, bulk controls and module registration. In-game rendering remains pending.
+
+## LH icon (October 21, 2026)
+
+- Replaced Icon.png and Icon.tga with large gold LH lettering on a dark background, using Spoken/icon.tga as the reference for its chamfered gold frame. The README credits the Spoken frame reference; there is no runtime Spoken dependency.
+- Icon.png is the generated source; Icon.tga is an uncompressed 256x256 32-bit BGRA texture with top-left origin and alpha, downscaled using high-quality bicubic interpolation. The existing TOC IconTexture path is retained.
+
+## Leatrix Plus compatibility (0.9.1)
+
+- Local inspection on October 21, 2026 found Leatrix_Maps but no Leatrix_Plus installation. No actual Plus settings could be inspected locally.
+- LeatrixHandles checks loaded Leatrix_Plus through C_AddOns.IsAddOnLoaded (legacy fallback), then LeaPlusDB.AutoRepairGear and LeaPlusDB.AutoSellJunk for On/true. Missing/unknown data does not block. Key names and On/Off values were inspected in the archived Classic source: https://github.com/jpaolin/leatrix-plus-classic/blob/master/Leatrix_Plus.lua . Current Forever integration remains unverified; the official release archive could not be downloaded from this environment.
+- Native controls use AddModifyPredicate, dynamic tooltips and conditional visible notice rows. UI values show off while managed; saved LH preferences remain intact. Merchant functions independently suppress duplicate work. Direct on commands are blocked while managed; all on remains runtime-suppressed.
+- Settings poll every 0.5 seconds only while the settings panel is open, refreshing changed compatibility states. Leatrix settings are never written.
+- .leatrix-test.py and the settings/chat-border/location/tooltip suites passed. Coverage includes absent/unloaded Plus, separate options, visible disabled controls, notes, runtime suppression, command paths and preference recovery. Real in-game Plus integration remains pending.
+
+- On October 21, 2026, the user confirmed that version 0.9.1 works in game. The local installation had no Leatrix Plus, so this confirms the available controls and normal operation; integration with a loaded Plus installation remains unverified.
