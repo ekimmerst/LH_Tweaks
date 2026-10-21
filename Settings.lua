@@ -73,7 +73,7 @@ local function RegisterSettings()
     Button(layout, "Enable all tweaks", "Enable all", function() Hub:RunCommand("all on") end,
         "Enable every feature, including automatic repairs, grey-item sales and position unlocking.")
     Button(layout, "Disable all tweaks", "Disable all", function() Hub:RunCommand("all off") end,
-        "Disable every feature and keep saved positions. Defaults also clears saved positions.")
+        "Disable every feature, including instant fishing loot, and keep saved positions. Defaults also clears saved positions.")
 
     -- Keep Blizzard's list, controls and right-aligned Defaults button intact.
     -- Only the content heading differs from the navigation label.

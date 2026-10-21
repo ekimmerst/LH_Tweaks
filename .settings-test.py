@@ -54,7 +54,7 @@ for _,feature in ipairs(LH_Tweaks.features) do
  s.set(true);assert(s.get()==true and LH_TweaksDB[feature.key]==true)
  s.set(false);assert(s.get()==false);count=count+1
 end
-assert(count==7)
+assert(count==8)
 SlashCmdList.LH_TWEAKS('auto-repair on')
 assert(registry.LH_Tweaks_autoRepair.get() and notices.LH_Tweaks_autoRepair>0)
 combat=true;registry.LH_Tweaks_moveChatBarToTop.set(true)
@@ -75,4 +75,4 @@ assert(#registered==2 and LH_Tweaks.modules.demo.category.parent==c)
 LH_Tweaks:RegisterModule('demo','Demo',function() error('duplicate') end)
 e.scripts.OnEvent(e,'PLAYER_LOGIN');assert(#registered==2)
 ''')
-print('PASS: native category, title isolation, seven controls, chat/UI synchronization, combat deferral, scoped defaults, position resets, bulk controls and module registration')
+print('PASS: native category, title isolation, eight controls, chat/UI synchronization, combat deferral, scoped defaults, position resets, bulk controls and module registration')

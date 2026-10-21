@@ -417,6 +417,48 @@ local function ApplyScrollBars(frames)
 end
 
 local Apply
+local fishingLootFrame
+local function InstallFishingLootHandler()
+    if not LH_TweaksDB.instantFishingLoot or not LootFrame or fishingLootFrame == LootFrame then return end
+    if not (IsFishingLoot and GetNumLootItems and LootSlot and C_Timer and C_Timer.After) then return end
+    local original = LootFrame:GetScript("OnEvent")
+    if type(original) ~= "function" then return end
+    fishingLootFrame = LootFrame
+    local session
+    LootFrame:SetScript("OnEvent", function(frame, event, ...)
+        if event == "LOOT_OPENED" then
+            session = nil
+            if LH_TweaksDB.instantFishingLoot and IsFishingLoot() then
+                -- Intercept before Blizzard displays the window. Hiding it later
+                -- would flash on screen and OnHide could close uncollected loot.
+                local current = {}
+                session = current
+                for slot = GetNumLootItems(), 1, -1 do
+                    if session ~= current then break end
+                    local ok = pcall(LootSlot, slot)
+                    if not ok then
+                        session = nil
+                        original(frame, "LOOT_OPENED", false)
+                        return
+                    end
+                end
+                C_Timer.After(1, function()
+                    if session ~= current then return end
+                    session = nil
+                    -- Full bags or other failures retain the normal recovery UI.
+                    if GetNumLootItems() > 0 then original(frame, "LOOT_OPENED", false) end
+                end)
+                return
+            end
+        elseif event == "LOOT_CLOSED" then
+            session = nil
+        elseif session and (event == "LOOT_SLOT_CLEARED" or event == "LOOT_SLOT_CHANGED") then
+            return
+        end
+        original(frame, event, ...)
+    end)
+end
+
 local function InstallFunctionHooks()
     for _, name in ipairs({"FCF_OpenNewWindow", "FCF_OpenTemporaryWindow", "FCF_RestorePositionAndDimensions", "FCF_SetWindowPosition"}) do
         if type(_G[name]) == "function" and not functionHooks[name] then
@@ -430,6 +472,7 @@ Apply = function()
     if not initialized then return end
     if InCombat() then pending = true; return end
     pending = false
+    InstallFishingLootHandler()
     if worldReady and LH_TweaksDB.minimapPositionRepair ~= 1 then
         if MinimapCluster and MinimapCluster.MinimapContainer then
             -- One-time repair for the location-bar layout bug in 0.6.0/0.6.1.
@@ -532,6 +575,7 @@ local function AutoRepair()
 end
 
 local function Help()
+    Print("/lh_tweaks instant-fishing-loot on|off - collect fishing loot without flashing the loot window; show remaining items if collection fails.")
     Print("/lh_tweaks replace-chatbar-frame on|off - use the LH_ExpBar border for chat input, or restore the standard border.")
     Print("/lh_tweaks unlock-tooltip on|off|reset - drag the bottom-right circle, lock the tooltip, or restore its default position.")
     Print("/lh_tweaks unlock-location-bar on|off|reset - drag the location bar with its attached buttons, lock it in place, or restore its original position.")
@@ -560,6 +604,7 @@ SlashCmdList.LH_TWEAKS = function(message)
         Print("auto-sell-greys: " .. (LeatrixHandles("autoSellGreys") and "already handled by Leatrix Plus" or LH_TweaksDB.autoSellGreys and "on" or "off"))
         Print("unlock-location-bar: " .. (LH_TweaksDB.locationBar and "on" or "off") .. (pending and " (pending)" or ""))
         Print("unlock-tooltip: " .. (LH_TweaksDB.unlockTooltip and "on" or "off") .. (pending and " (pending)" or ""))
+        Print("instant-fishing-loot: " .. (LH_TweaksDB.instantFishingLoot and "on" or "off"))
     elseif command == "all" and (value == "on" or value == "off") and extra == "" then
         local enabled = value == "on"
         LH_TweaksDB.chatWindow = enabled
@@ -569,6 +614,7 @@ SlashCmdList.LH_TWEAKS = function(message)
         LH_TweaksDB.autoSellGreys = enabled
         LH_TweaksDB.locationBar = enabled
         LH_TweaksDB.unlockTooltip = enabled
+        LH_TweaksDB.instantFishingLoot = enabled
         Apply()
         Print("All tweaks: " .. value .. (pending and " (layout changes pending; apply after combat or when UI frames load)" or ""))
     elseif command == "unlock-location-bar" and (value == "on" or value == "off" or value == "reset") and extra == "" then
@@ -589,6 +635,10 @@ SlashCmdList.LH_TWEAKS = function(message)
         end
         Apply()
         Print("unlock-tooltip: " .. value .. (pending and " (pending; applies after combat or when the tooltip loads)" or ""))
+    elseif command == "instant-fishing-loot" and (value == "on" or value == "off") and extra == "" then
+        LH_TweaksDB.instantFishingLoot = value == "on"
+        Apply()
+        Print("instant-fishing-loot: " .. value)
     elseif command == "auto-sell-greys" and (value == "on" or value == "off") and extra == "" then
         if value == "on" and LeatrixHandles("autoSellGreys") then
             Print("Auto-sell greys is already handled by Leatrix Plus.")
@@ -632,6 +682,7 @@ Hub.features = {
     { key = "unlockTooltip", command = "unlock-tooltip", section = "Positioning", label = "Unlock the default tooltip", tooltip = "Drag the small circle at the tooltip's bottom-right corner. Disable to lock the saved position." },
     { key = "autoRepair", command = "auto-repair", section = "Merchants", label = "Automatically repair equipment", tooltip = "Repair at merchants using your own money when the full repair cost is affordable." },
     { key = "autoSellGreys", command = "auto-sell-greys", section = "Merchants", label = "Automatically sell grey items", tooltip = "Sell poor-quality items from your bags on your next merchant visit." },
+    { key = "instantFishingLoot", command = "instant-fishing-loot", section = "Fishing", label = "Loot fishing catches without a loot window", tooltip = "Collect fishing loot immediately when you interact with the bobber, including by right-click. If items remain after one second, show the normal loot window for manual recovery. Normal non-fishing loot is unchanged. BetterFishing is not required." },
 }
 
 function Hub:IsReady() return initialized end
@@ -672,6 +723,7 @@ events:SetScript("OnEvent", function(_, event, name)
         LH_TweaksDB.autoSellGreys = LH_TweaksDB.autoSellGreys == true
         LH_TweaksDB.locationBar = LH_TweaksDB.locationBar == true
         LH_TweaksDB.unlockTooltip = LH_TweaksDB.unlockTooltip == true
+        LH_TweaksDB.instantFishingLoot = LH_TweaksDB.instantFishingLoot == true
         if not ValidLocation(LH_TweaksDB.tooltipPosition) then LH_TweaksDB.tooltipPosition = nil end
         if not ValidLocation(LH_TweaksDB.locationBarPosition) then LH_TweaksDB.locationBarPosition = nil end
         initialized = true

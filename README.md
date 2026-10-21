@@ -1,8 +1,8 @@
 # LH_Tweaks
 
-Version: 0.9.2
+Version: 0.10.0
 
-LH_Tweaks adds simple quality-of-life tweaks to WoW Forever Beta: customize your chat layout, reposition the location bar, repair automatically and sell grey items with less clicking.
+LH_Tweaks adds simple quality-of-life tweaks to WoW Forever Beta: customize your chat layout, reposition the location bar, repair automatically, sell grey items and collect fishing catches without flashing the loot window.
 
 ## Features
 
@@ -47,6 +47,8 @@ Type `/lh_tweaks all on` to enable all features, or choose individual tweaks:
 | `/lh_tweaks unlock-location-bar reset` | Restore its original anchors and forget its saved position; keep the current lock setting. |
 | `/lh_tweaks auto-repair on` | Enable automatic repairs. |
 | `/lh_tweaks auto-sell-greys on` | Enable automatic grey-item sales. |
+| `/lh_tweaks instant-fishing-loot on` | Collect fishing loot immediately without showing the loot window. |
+| `/lh_tweaks instant-fishing-loot off` | Restore the normal fishing-loot behavior. |
 | `/lh_tweaks status` | Show your current settings. |
 | `/lh_tweaks help` | Show all commands. |
 
@@ -56,6 +58,14 @@ All features are off by default, and your choices, location-bar position and too
 
 Use Edit Mode to move the main chat window. Chat and location-bar layout changes made during combat take effect after combat ends; dragging is unavailable during combat. Automatic repairs and sales begin on your next merchant visit.
 
+## Instant fishing loot
+
+Enable **Loot fishing catches without a loot window** in the native LH Tweaks page's **Fishing** section, or use `/lh_tweaks instant-fishing-loot on`. It defaults to off and is saved per character as `LH_TweaksDB.instantFishingLoot`, alongside the other tweaks. `all on`, `all off`, help, status and native Defaults include it.
+
+When you interact with a fishing bobber, including by right-click, LH_Tweaks intercepts fishing loot before Blizzard displays the loot window and collects slots in descending order. Non-fishing loot continues through the original handler with its original arguments. No auto-loot CVar or fishing cast/key binding is changed. If items remain after one second (for example, with full bags), the normal loot window opens for manual recovery. Ending the loot session or opening another loot source cancels the previous delayed recovery. A pending fishing session still exposes remaining items if the setting is turned off while looting. Initial handler installation waits until combat ends if necessary and retries when the loot UI loads later.
+
+This moves the local instant-loot addition from BetterFishing into LH_Tweaks. The bundled local BetterFishing version 66-lh.1 no longer installs that handler; its casting, keybind, double-click and sound features remain independent. BetterFishing is not required for the LH_Tweaks feature. Reload after updating both addons, then enable the new option to retain the previous local instant-loot behavior.
+
 ## Installation and upgrade
 
 Place the `LH_Tweaks` folder in your game's `Interface/AddOns` folder. It must contain `LH_Tweaks.toc`, `LH_Tweaks.lua`, `Settings.lua` and `Icon.tga`. Restart WoW and enable **LH_Tweaks** in the addon list.
@@ -64,7 +74,14 @@ When upgrading from TweakMe, replace the old folder and fully restart WoW. Do no
 
 To retain your settings and saved positions, close WoW and back up each character's `WTF/Account/<account>/<realm>/<character>/SavedVariables/TweakMe.lua` file. Copy it to `LH_Tweaks.lua` in the same SavedVariables folder, then change `TweakMeDB` to `LH_TweaksDB` inside the copy. Copy the entire table, including `minimapPositionRepair`, to preserve its completed repair state. Migrate before first using the renamed addon; do not overwrite an existing `LH_Tweaks.lua` containing settings you want to keep. Without migration, features start disabled, saved positions are absent and the one-time minimap position repair runs again.
 
+## Version 0.10.0
+
+Added `instant-fishing-loot on|off` and its native Fishing checkbox, including bulk toggles, help/status, per-character persistence and Defaults. Moved the local BetterFishing loot interceptor into LH_Tweaks, with normal loot passthrough, a one-second recovery window, stale-session guards and immediate native recovery on loot API errors.
+
+`.fishing-loot-test.py` passed silent successful catches, descending slot order, normal loot passthrough, uncollected-item recovery, closed/superseded sessions, command validation, proxy synchronization, bulk/default behavior, synchronous loot closure, API failures and late UI/combat-deferred installation. In-game verification remains pending: reload both updated addons, enable the option, right-click a bobber, check a normal loot source, test with full bags and verify that turning the option off restores normal fishing loot.
+
 ## Version 0.9.2
+
 
 Explicitly set the native AddOn-list group to LH_Tweaks so LH HideMe appears as a child under LH Tweaks. Its native settings subpage is available by expanding LH Tweaks.
 
