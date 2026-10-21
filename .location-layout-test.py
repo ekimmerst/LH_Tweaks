@@ -64,18 +64,18 @@ c.ZoneTextButton=CreateFrame('Frame',nil,c);c.ZoneTextButton:SetPoint('TOP',c.Mi
 c.Tracking=CreateFrame('Frame',nil,c);c.Tracking:SetPoint('RIGHT',c.ZoneTextButton,'LEFT',-20,0)
 GameTimeFrame=CreateFrame('Frame',nil,c);GameTimeFrame:SetPoint('LEFT',c.ZoneTextButton,'RIGHT',20,0)
 c:Layout(); baseline=c.w
-TweakMeDB={locationBar=false,locationBarPosition={x=0.1,y=0.4}}
+LH_TweaksDB={locationBar=false,locationBarPosition={x=0.1,y=0.4}}
 ''')
-lua.execute(Path('TweakMe.lua').read_text(), 'TweakMe')
+lua.execute(Path('LH_Tweaks.lua').read_text(), 'LH_Tweaks')
 lua.execute('''
 local e=frames[#frames];function event(s,n) e.scripts.OnEvent(e,s,n) end
-function cmd(s) SlashCmdList.TWEAKME(s) end
-event('ADDON_LOADED','TweakMe');assert(not MinimapCluster.ZoneTextButton.ignoreInLayout)
-combat=true;event('PLAYER_ENTERING_WORLD');assert(TweakMeDB.minimapPositionRepair==nil)
+function cmd(s) SlashCmdList.LH_TWEAKS(s) end
+event('ADDON_LOADED','LH_Tweaks');assert(not MinimapCluster.ZoneTextButton.ignoreInLayout)
+combat=true;event('PLAYER_ENTERING_WORLD');assert(LH_TweaksDB.minimapPositionRepair==nil)
 combat=false;event('PLAYER_REGEN_ENABLED')
 local c=MinimapCluster;local bar=c.ZoneTextButton
 assert(c.points[1][1]=='TOPRIGHT' and c.points[1][4]==0 and not c.placed and not c:IsMovable())
-assert(TweakMeDB.minimapPositionRepair==1)
+assert(LH_TweaksDB.minimapPositionRepair==1)
 assert(bar.ignoreInLayout and c.Tracking.ignoreInLayout and GameTimeFrame.ignoreInLayout)
 assert(not c.MinimapContainer.ignoreInLayout)
 c:Layout();assert(c.w==baseline, 'Saved header position changed minimap bounds')
@@ -89,7 +89,7 @@ bar.placed=true
 c:Layout();assert(c.w==baseline)
 cmd('unlock-location-bar reset');assert(not bar.ignoreInLayout and not c.Tracking.ignoreInLayout)
 assert(not bar:IsMovable() and not bar:IsUserPlaced())
-c:Layout();assert(c.w==baseline and TweakMeDB.locationBarPosition==nil)
+c:Layout();assert(c.w==baseline and LH_TweaksDB.locationBarPosition==nil)
 c:SetPoint('CENTER',UIParent,'CENTER',123,0);event('PLAYER_ENTERING_WORLD');assert(c.points[1][1]=='CENTER','Repair repeated')
 cmd('unlock-location-bar on');handle.scripts.OnDragStart();bar.dragX=30;handle.scripts.OnDragStop();bar.dragX=nil
 c:Layout();assert(c.w==baseline,'Second drag changed bounds')

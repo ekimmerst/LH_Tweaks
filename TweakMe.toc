@@ -1,9 +1,0 @@
-## Interface: 16001
-## Title: TweakMe
-## Notes: Tweaks standard UI behavior using chat commands.
-## Author: TweakMe
-## Version: 0.7.0
-## IconTexture: Interface\AddOns\TweakMe\Icon.tga
-## SavedVariablesPerCharacter: TweakMeDB
-
-TweakMe.lua

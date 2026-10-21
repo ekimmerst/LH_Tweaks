@@ -1,6 +1,8 @@
-# TweakMe
+# LH_Tweaks
 
-TweakMe adds simple quality-of-life tweaks to WoW Forever Beta: customize your chat layout, reposition the location bar, repair automatically and sell grey items with less clicking.
+Version: 0.7.1
+
+LH_Tweaks adds simple quality-of-life tweaks to WoW Forever Beta: customize your chat layout, reposition the location bar, repair automatically and sell grey items with less clicking.
 
 ## Features
 
@@ -13,29 +15,41 @@ TweakMe adds simple quality-of-life tweaks to WoW Forever Beta: customize your c
 
 ## Commands
 
-Type `/tweakme all on` to enable all features, or choose individual tweaks:
+Type `/lh_tweaks all on` to enable all features, or choose individual tweaks:
 
 | Command | Action |
 | --- | --- |
-| `/tweakme all on` | Enable all features. |
-| `/tweakme remove-chatwindow-move-limit on` | Allow chat windows beyond the screen edges and hide scrollbars. |
-| `/tweakme move-chatbar-to-top on` | Move chat input above the chat window. |
-| `/tweakme unlock-location-bar on` | Unlock the location bar; drag its zone-name area with the left mouse button. |
-| `/tweakme unlock-tooltip on` | Show a small circle at the tooltip's bottom-right corner; drag it with the left mouse button. |
-| `/tweakme unlock-tooltip off` | Hide the circle and lock the tooltip at the chosen position. |
-| `/tweakme unlock-tooltip reset` | Forget the saved position and restore Blizzard's default anchor; keep the current lock setting. |
-| `/tweakme unlock-location-bar off` | Lock the location bar at its current position. |
-| `/tweakme unlock-location-bar reset` | Restore its original anchors and forget its saved position; keep the current lock setting. |
-| `/tweakme auto-repair on` | Enable automatic repairs. |
-| `/tweakme auto-sell-greys on` | Enable automatic grey-item sales. |
-| `/tweakme status` | Show your current settings. |
-| `/tweakme help` | Show all commands. |
+| `/lh_tweaks all on` | Enable all features. |
+| `/lh_tweaks remove-chatwindow-move-limit on` | Allow chat windows beyond the screen edges and hide scrollbars. |
+| `/lh_tweaks move-chatbar-to-top on` | Move chat input above the chat window. |
+| `/lh_tweaks unlock-location-bar on` | Unlock the location bar; drag its zone-name area with the left mouse button. |
+| `/lh_tweaks unlock-tooltip on` | Show a small circle at the tooltip's bottom-right corner; drag it with the left mouse button. |
+| `/lh_tweaks unlock-tooltip off` | Hide the circle and lock the tooltip at the chosen position. |
+| `/lh_tweaks unlock-tooltip reset` | Forget the saved position and restore Blizzard's default anchor; keep the current lock setting. |
+| `/lh_tweaks unlock-location-bar off` | Lock the location bar at its current position. |
+| `/lh_tweaks unlock-location-bar reset` | Restore its original anchors and forget its saved position; keep the current lock setting. |
+| `/lh_tweaks auto-repair on` | Enable automatic repairs. |
+| `/lh_tweaks auto-sell-greys on` | Enable automatic grey-item sales. |
+| `/lh_tweaks status` | Show your current settings. |
+| `/lh_tweaks help` | Show all commands. |
 
-Replace `on` with `off` to disable any feature. Use `/tweakme all off` to disable them all, including locking the location bar and tooltip at their chosen positions. You can change individual settings at any time. Both `unlock-location-bar` and `unlock-tooltip` accept `reset`.
+Replace `on` with `off` to disable any feature. Use `/lh_tweaks all off` to disable them all, including locking the location bar and tooltip at their chosen positions. You can change individual settings at any time. Both `unlock-location-bar` and `unlock-tooltip` accept `reset`.
 
-All features are off by default, and your choices, location-bar position and tooltip position are saved for each character. While unlocked, the drag area covers the zone-name button; lock it again to use that button normally. Attached buttons keep their existing anchors and click behavior. The minimap stays in place. Reset restores the anchors captured before TweakMe first moved the bar in the current session, relative to the minimap's current layout.
+All features are off by default, and your choices, location-bar position and tooltip position are saved for each character. While unlocked, the drag area covers the zone-name button; lock it again to use that button normally. Attached buttons keep their existing anchors and click behavior. The minimap stays in place. Reset restores the anchors captured before LH_Tweaks first moved the bar in the current session, relative to the minimap's current layout.
 
 Use Edit Mode to move the main chat window. Chat and location-bar layout changes made during combat take effect after combat ends; dragging is unavailable during combat. Automatic repairs and sales begin on your next merchant visit.
+
+## Installation and upgrade
+
+Place the `LH_Tweaks` folder in your game's `Interface/AddOns` folder. It must contain `LH_Tweaks.toc`, `LH_Tweaks.lua` and `Icon.tga`. Restart WoW and enable **LH_Tweaks** in the addon list.
+
+When upgrading from TweakMe, replace the old folder and fully restart WoW. Do not enable both versions together. Commands now use `/lh_tweaks`.
+
+To retain your settings and saved positions, close WoW and back up each character's `WTF/Account/<account>/<realm>/<character>/SavedVariables/TweakMe.lua` file. Copy it to `LH_Tweaks.lua` in the same SavedVariables folder, then change `TweakMeDB` to `LH_TweaksDB` inside the copy. Copy the entire table, including `minimapPositionRepair`, to preserve its completed repair state. Migrate before first using the renamed addon; do not overwrite an existing `LH_Tweaks.lua` containing settings you want to keep. Without migration, features start disabled, saved positions are absent and the one-time minimap position repair runs again.
+
+## Version 0.7.1
+
+Renamed TweakMe to LH_Tweaks, including the folder, Lua/TOC files, metadata, icon path, chat prefix, command registration, saved-variable table and test references. Commands now use `/lh_tweaks`. Updated English documentation and added settings migration instructions.
 
 ## Version 0.7.0
 
@@ -53,7 +67,7 @@ The stricter Lupa regression test reproduced the invalid call before the fix and
 
 Fixed the minimap shifting left after reloading with a saved location-bar position. The detached header and its attached frames no longer enlarge the minimap's automatic layout bounds; hidden placeholders preserve their original footprint. Location-bar restoration waits until entering the world.
 
-On the first world entry after this update, TweakMe resets the minimap cluster to the standard top-right anchor, deferring during combat. This repair runs once per character (`TweakMeDB.minimapPositionRepair`); later minimap positioning remains independent. Saved location-bar positions are preserved.
+On the first world entry after this update, LH_Tweaks resets the minimap cluster to the standard top-right anchor, deferring during combat. This repair runs once per character (`LH_TweaksDB.minimapPositionRepair`); later minimap positioning remains independent. Saved location-bar positions are preserved.
 
 The Lupa regression simulation in `.location-layout-test.py` passed saved-position restoration, dragging, locking, reset, repeated dragging, attached-frame layout isolation, one-time minimap repair and startup/combat deferral. In-game reload verification is pending.
 

@@ -2,7 +2,7 @@ from pathlib import Path
 
 # Reuse the existing frame simulation without running its assertions.
 source = Path('.location-layout-test.py').read_text()
-exec(source.split("lua.execute(Path('TweakMe.lua')")[0])
+exec(source.split("lua.execute(Path('LH_Tweaks.lua')")[0])
 lua.execute('''
 local M=getmetatable(UIParent).__index
 function M:SetFrameStrata() end
@@ -25,41 +25,41 @@ function hooksecurefunc(f,k,fn)
 end
 GameTooltip=CreateFrame('GameTooltip',nil,UIParent)
 GameTooltip.shown=false
-TweakMeDB={minimapPositionRepair=1}
+LH_TweaksDB={minimapPositionRepair=1}
 ''')
-lua.execute(Path('TweakMe.lua').read_text(), 'TweakMe')
+lua.execute(Path('LH_Tweaks.lua').read_text(), 'LH_Tweaks')
 lua.execute('''
 local e=frames[#frames]
 function event(s,n) e.scripts.OnEvent(e,s,n) end
-function cmd(s) SlashCmdList.TWEAKME(s) end
-event('ADDON_LOADED','TweakMe');event('PLAYER_ENTERING_WORLD')
-assert(not TweakMeDB.unlockTooltip and not TweakMeDB.tooltipPosition)
+function cmd(s) SlashCmdList.LH_TWEAKS(s) end
+event('ADDON_LOADED','LH_Tweaks');event('PLAYER_ENTERING_WORLD')
+assert(not LH_TweaksDB.unlockTooltip and not LH_TweaksDB.tooltipPosition)
 cmd('unlock-tooltip on')
 local h=frames[#frames]
 assert(h.shown and h.w==16 and h.points[1][4]==900)
 h.scripts.OnDragStart();h.dragX=600;h.dragY=200;h.scripts.OnUpdate()
 assert(GameTooltip.points[1][1]=='BOTTOMRIGHT' and GameTooltip.points[1][4]==600)
 h.scripts.OnDragStop()
-assert(TweakMeDB.tooltipPosition.x==0.6 and TweakMeDB.tooltipPosition.y==0.25)
+assert(LH_TweaksDB.tooltipPosition.x==0.6 and LH_TweaksDB.tooltipPosition.y==0.25)
 cmd('unlock-tooltip off');assert(not h.shown)
 GameTooltip_SetDefaultAnchor(GameTooltip,UIParent)
 assert(GameTooltip.points[1][4]==600 and GameTooltip.points[1][5]==200)
-cmd('unlock-tooltip on extra');assert(not TweakMeDB.unlockTooltip)
+cmd('unlock-tooltip on extra');assert(not LH_TweaksDB.unlockTooltip)
 combat=true;cmd('unlock-tooltip on');assert(not h.shown)
 combat=false;event('PLAYER_REGEN_ENABLED');assert(h.shown)
 combat=true;h.scripts.OnDragStart();assert(not h.moving)
 cmd('unlock-tooltip reset');assert(GameTooltip.points[1][4]==600)
 combat=false;event('PLAYER_REGEN_ENABLED')
-assert(h.shown and not TweakMeDB.tooltipPosition and GameTooltip.points[1][4]==900)
+assert(h.shown and not LH_TweaksDB.tooltipPosition and GameTooltip.points[1][4]==900)
 cmd('unlock-tooltip off');cmd('unlock-tooltip reset');assert(not h.shown)
-cmd('all on');assert(TweakMeDB.unlockTooltip and h.shown)
-cmd('all off');assert(not TweakMeDB.unlockTooltip and not h.shown)
-TweakMeDB.tooltipPosition={x=0.3,y=0.2}
+cmd('all on');assert(LH_TweaksDB.unlockTooltip and h.shown)
+cmd('all off');assert(not LH_TweaksDB.unlockTooltip and not h.shown)
+LH_TweaksDB.tooltipPosition={x=0.3,y=0.2}
 ''')
 # Simulate a new addon session with a saved, locked position.
-lua.execute(Path('TweakMe.lua').read_text(), 'TweakMe')
+lua.execute(Path('LH_Tweaks.lua').read_text(), 'LH_Tweaks')
 lua.execute('''
-local e=frames[#frames];e.scripts.OnEvent(e,'ADDON_LOADED','TweakMe')
+local e=frames[#frames];e.scripts.OnEvent(e,'ADDON_LOADED','LH_Tweaks')
 e.scripts.OnEvent(e,'PLAYER_ENTERING_WORLD')
 assert(GameTooltip.points[1][4]==300 and GameTooltip.points[1][5]==160)
 assert(not frames[#frames].shown)
