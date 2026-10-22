@@ -1,5 +1,7 @@
 <h1 style="color: #d9a94b;">LH Tweaks</h1>
 
+<p>Add a shared settings hub for LH addons and small WoW UI improvements for chat, tooltips, merchants, and fishing.</p>
+
 <p>Small changes to the World of Warcraft UI, with a place for all my LH addons in the game's own Settings menu.</p>
 
 <h2 style="color: #c78be6;">Why I made these addons</h2>
