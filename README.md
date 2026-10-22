@@ -39,7 +39,7 @@
   <li><strong>LH NameplateThreatColors:</strong> Colors Blizzard nameplate health bars by threat for your role while grouped.</li>
   <li><strong>LH PetStats:</strong> Shows pet loyalty by the pet portrait, with a matching small progress bar.</li>
   <li><strong>LH Range:</strong> Shows melee range, with additional spell-range zones for Shamans and Hunters.</li>
-  <li><strong>LH Reminders:</strong> Reminds you when class buffs are missing.</li>
+  <li><strong>LH BuffReminders:</strong> Reminds you when class buffs are missing.</li>
   <li><strong>LH Skills:</strong> Shows profession skills in a compact, movable display with rank colors and skill-up flashes.</li>
   <li><strong>LH Stats:</strong> Keeps your money, free bag slots and remaining ammo visible below the minimap.</li>
   <li><strong>LH SwingTimer:</strong> Adds minimal main-hand and ranged swing timers beneath the player cast bar.</li>
