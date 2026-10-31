@@ -176,6 +176,9 @@ end)
 local elapsed, previous = 0, {}
 events:SetScript("OnUpdate", function(_, delta)
     if not Hub.category or not SettingsPanel or not SettingsPanel.IsShown or not SettingsPanel:IsShown() then return end
+    -- RepairDisplay rebuilds the current list, which may belong to Blizzard.
+    -- Only the LH Tweaks page contains the Leatrix-dependent rows.
+    if SettingsPanel:GetCurrentCategory() ~= Hub.category then return end
     elapsed = elapsed + delta
     if elapsed < 0.5 then return end
     elapsed = 0

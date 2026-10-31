@@ -62,6 +62,12 @@
 
 <h2 style="color: #73c9c4;">Changelog</h2>
 
+<p><strong>0.10.5 - Forever and Retail</strong></p>
+
+<ul>
+  <li>Limit Leatrix Plus settings refreshes to the LH Tweaks page so Blizzard's game options are not rebuilt by the addon.</li>
+</ul>
+
 <p><strong>0.10.4 - Forever and Retail</strong></p>
 
 <ul>

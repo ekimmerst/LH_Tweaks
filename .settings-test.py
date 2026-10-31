@@ -60,6 +60,15 @@ assert(c.layout.rows[1].header=='Positioning')
 assert(c.layout.rows[2].setting.label=='Lock location bar')
 assert(c.layout.rows[4].setting.label=='Lock tooltip')
 SettingsPanel:DisplayCategory(c);assert(SettingsPanel.list.Header.Title.text=='LiteHawk Tweaks')
+SettingsPanel.IsShown=function() return true end
+local repairs=0
+SettingsPanel.RepairDisplay=function() repairs=repairs+1 end
+SettingsPanel:DisplayCategory({name='Social'})
+e.scripts.OnUpdate(e,1)
+assert(repairs==0)
+SettingsPanel:DisplayCategory(c)
+e.scripts.OnUpdate(e,.5)
+assert(repairs==1)
 local header=SettingsPanel.list.Header
 assert(#header.children==3)
 local enable,disable=header.children[2],header.children[3]
