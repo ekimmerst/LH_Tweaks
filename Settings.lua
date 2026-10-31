@@ -1,6 +1,9 @@
 local addonName = ...
 local Hub = LH_Tweaks
 local variables = {}
+local lockLabels = {locationBar = "Lock location bar", unlockTooltip = "Lock tooltip"}
+local headerActions = {}
+local headerButtons
 
 local function Header(layout, title)
     layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(title))
@@ -8,6 +11,49 @@ end
 
 local function Button(layout, label, text, callback, tooltip)
     layout:AddInitializer(CreateSettingsButtonInitializer(label, text, callback, tooltip, true))
+end
+
+local function SyncHeaderActions(panel, category)
+    local actions = headerActions[category]
+    local searching = panel.SearchBox and panel.SearchBox.HasText and panel.SearchBox:HasText()
+    if not actions or searching then
+        if headerButtons then
+            for _, button in ipairs(headerButtons) do button:Hide() end
+        end
+        return
+    end
+    local header = panel:GetSettingsList().Header
+    if not header or not header.DefaultsButton then return end
+    if not headerButtons then
+        headerButtons = {}
+        for i = 1, 2 do
+            local button = CreateFrame("Button", nil, header, "UIPanelButtonTemplate")
+            button:SetSize(96, 22)
+            button:SetScript("OnEnter", function(self)
+                if not self.tooltip then return end
+                GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+                GameTooltip:SetText(self.tooltip, 1, 1, 1, true)
+                GameTooltip:Show()
+            end)
+            button:SetScript("OnLeave", function() GameTooltip:Hide() end)
+            headerButtons[i] = button
+        end
+        headerButtons[2]:ClearAllPoints()
+        headerButtons[2]:SetPoint("RIGHT", header.DefaultsButton, "LEFT", -8, 0)
+        headerButtons[1]:ClearAllPoints()
+        headerButtons[1]:SetPoint("RIGHT", headerButtons[2], "LEFT", -6, 0)
+    end
+    for i, action in ipairs(actions) do
+        local button = headerButtons[i]
+        button:SetText(action.text)
+        button.tooltip = action.tooltip
+        button:SetScript("OnClick", action.callback)
+        button:Show()
+    end
+end
+
+function Hub:RegisterHeaderActions(category, first, second)
+    headerActions[category] = {first, second}
 end
 
 function Hub:RefreshSettings()
@@ -36,22 +82,43 @@ local function RegisterSettings()
 
     local category, layout = Settings.RegisterVerticalLayoutCategory("LH Tweaks")
     Hub.category = category
-    local section
+    local orderedFeatures = {}
     for _, feature in ipairs(Hub.features) do
+        if feature.section == "Positioning" then orderedFeatures[#orderedFeatures + 1] = feature end
+    end
+    for _, feature in ipairs(Hub.features) do
+        if feature.section ~= "Positioning" then orderedFeatures[#orderedFeatures + 1] = feature end
+    end
+    local section
+    for _, feature in ipairs(orderedFeatures) do
         if section ~= feature.section then
             section = feature.section
             Header(layout, section)
         end
         local variable = "LH_Tweaks_" .. feature.key
         variables[#variables + 1] = variable
-        local setting = Settings.RegisterProxySetting(category, variable, "boolean", feature.label, false,
-            function() return Hub:GetFeature(feature.key) end,
-            function(value) Hub:RunCommand(feature.command .. (value and " on" or " off")) end)
+        local isLock = lockLabels[feature.key] ~= nil
+        local setting = Settings.RegisterProxySetting(category, variable, "boolean",
+            lockLabels[feature.key] or feature.label, isLock,
+            function()
+                local enabled = Hub:GetFeature(feature.key)
+                if isLock then return not enabled end
+                return enabled
+            end,
+            function(value)
+                Hub:RunCommand(feature.command .. ((isLock ~= value) and " on" or " off"))
+            end)
         local initializer = Settings.CreateCheckbox(category, setting, function()
             if Hub:IsFeatureManaged(feature.key) then
                 return "Already handled by Leatrix Plus. Disable the corresponding option in Leatrix Plus to use LH Tweaks instead."
             end
-            return feature.tooltip .. " Changes are saved per character; layout changes wait until combat ends."
+            local tooltip = feature.tooltip
+            if feature.key == "locationBar" then
+                tooltip = "Disable to drag the zone-name area and its attached buttons. Enable to lock the location bar at its saved position."
+            elseif feature.key == "unlockTooltip" then
+                tooltip = "Disable to drag the circle at the tooltip's bottom-right corner. Enable to lock its saved position."
+            end
+            return tooltip .. " Changes are saved per character; layout changes wait until combat ends."
         end)
         initializer:AddModifyPredicate(function() return not Hub:IsFeatureManaged(feature.key) end)
         if feature.key == "autoRepair" or feature.key == "autoSellGreys" then
@@ -69,20 +136,24 @@ local function RegisterSettings()
             end, "Restore Blizzard's default tooltip anchor without changing its lock setting.")
         end
     end
-    Header(layout, "All features")
-    Button(layout, "Enable all tweaks", "Enable all", function() Hub:RunCommand("all on") end,
-        "Enable every feature, including automatic repairs, grey-item sales and position unlocking.")
-    Button(layout, "Disable all tweaks", "Disable all", function() Hub:RunCommand("all off") end,
-        "Disable every feature, including instant fishing loot, and keep saved positions. Defaults also clears saved positions.")
+    Hub:RegisterHeaderActions(category,
+        {text = "Enable all", callback = function() Hub:RunCommand("all on") end,
+            tooltip = "Enable every feature, including automatic repairs, grey-item sales and position unlocking."},
+        {text = "Disable all", callback = function() Hub:RunCommand("all off") end,
+            tooltip = "Disable every feature, including instant fishing loot, and keep saved positions. Defaults also clears saved positions."})
 
-    -- Keep Blizzard's list, controls and right-aligned Defaults button intact.
-    -- Only the content heading differs from the navigation label.
     hooksecurefunc(SettingsPanel, "DisplayCategory", function(panel, selected)
         if selected == category then
             panel:GetSettingsList().Header.Title:SetText("LiteHawk Tweaks")
             Hub:RefreshSettings()
         end
+        SyncHeaderActions(panel, selected)
     end)
+    if SettingsPanel.OnSearchTextChanged then
+        hooksecurefunc(SettingsPanel, "OnSearchTextChanged", function(panel)
+            SyncHeaderActions(panel, panel:GetCurrentCategory())
+        end)
+    end
     EventRegistry:RegisterCallback("Settings.CategoryDefaulted", function(_, selected)
         if selected == category then Hub:RestoreDefaults() end
     end, Hub)

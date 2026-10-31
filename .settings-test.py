@@ -3,6 +3,10 @@ from pathlib import Path
 source = Path('.location-layout-test.py').read_text()
 exec(source.split("lua.execute(Path('LH_Tweaks.lua')")[0])
 lua.execute('''
+local M=getmetatable(frames[1]).__index
+M.SetText=function(self,text) self.text=text end
+M.Click=function(self) if self.scripts.OnClick then self.scripts.OnClick(self) end end
+M.Show=function(self) self.shown=true end
 LH_TweaksDB={minimapPositionRepair=1,autoRepair=true}
 registry={}; registered={}; notices={}; callbacks={}; buttons={}
 Settings={}
@@ -31,8 +35,14 @@ end
 function CreateSettingsButtonInitializer(label,text,callback,tooltip)
  buttons[label]=callback;return {label=label,text=text,callback=callback}
 end
-SettingsPanel={list={Header={Title={SetText=function(self,t) self.text=t end}}}}
-function SettingsPanel:DisplayCategory(c) self.list.Header.Title:SetText(c.name) end
+local header=CreateFrame('Frame')
+header.DefaultsButton=CreateFrame('Button',nil,header)
+header.Title={SetText=function(self,t) self.text=t end}
+SettingsPanel={list={Header=header},SearchBox={searching=false}}
+function SettingsPanel.SearchBox:HasText() return self.searching end
+function SettingsPanel:OnSearchTextChanged() end
+function SettingsPanel:DisplayCategory(c) self.current=c;self.list.Header.Title:SetText(c.name) end
+function SettingsPanel:GetCurrentCategory() return self.current end
 function SettingsPanel:GetSettingsList() return self.list end
 EventRegistry={}
 function EventRegistry:RegisterCallback(event,callback,owner) callbacks[event]={callback,owner} end
@@ -46,13 +56,30 @@ local e=frames[#frames]
 e.scripts.OnEvent(e,'ADDON_LOADED','LH_Tweaks')
 local c=LH_Tweaks.category
 assert(c.name=='LH Tweaks' and #registered==1)
+assert(c.layout.rows[1].header=='Positioning')
+assert(c.layout.rows[2].setting.label=='Lock location bar')
+assert(c.layout.rows[4].setting.label=='Lock tooltip')
 SettingsPanel:DisplayCategory(c);assert(SettingsPanel.list.Header.Title.text=='LiteHawk Tweaks')
+local header=SettingsPanel.list.Header
+assert(#header.children==3)
+local enable,disable=header.children[2],header.children[3]
+assert(enable.text=='Enable all' and disable.text=='Disable all')
+assert(disable.points[1][2]==header.DefaultsButton and disable.points[1][4]==-8)
+assert(enable.points[1][2]==disable and enable.points[1][4]==-6)
 SettingsPanel:DisplayCategory({name='Other'});assert(SettingsPanel.list.Header.Title.text=='Other')
+assert(not enable:IsShown() and not disable:IsShown())
+SettingsPanel:DisplayCategory(c)
+SettingsPanel.SearchBox.searching=true;SettingsPanel:OnSearchTextChanged()
+assert(not enable:IsShown() and not disable:IsShown())
+SettingsPanel.SearchBox.searching=false;SettingsPanel:OnSearchTextChanged()
+assert(enable:IsShown() and disable:IsShown())
 local count=0
 for _,feature in ipairs(LH_Tweaks.features) do
- local s=registry['LH_Tweaks_'..feature.key];assert(s and s.default==false)
- s.set(true);assert(s.get()==true and LH_TweaksDB[feature.key]==true)
- s.set(false);assert(s.get()==false);count=count+1
+ local s=registry['LH_Tweaks_'..feature.key]
+ local lock=feature.key=='locationBar' or feature.key=='unlockTooltip'
+ assert(s and s.default==lock)
+ s.set(true);assert(s.get()==true and LH_TweaksDB[feature.key]~=lock)
+ s.set(false);assert(s.get()==false and LH_TweaksDB[feature.key]==lock);count=count+1
 end
 assert(count==8)
 SlashCmdList.LH_TWEAKS('auto-repair on')
@@ -66,8 +93,8 @@ for _,f in ipairs(LH_Tweaks.features) do assert(not LH_TweaksDB[f.key]) end
 assert(not LH_TweaksDB.locationBarPosition and not LH_TweaksDB.tooltipPosition)
 assert(LH_TweaksDB.minimapPositionRepair==1 and LH_Tweaks:IsPending())
 combat=false;coreEvent.scripts.OnEvent(coreEvent,'PLAYER_REGEN_ENABLED')
-buttons['Enable all tweaks']();for _,f in ipairs(LH_Tweaks.features) do assert(LH_TweaksDB[f.key]) end
-buttons['Disable all tweaks']();for _,f in ipairs(LH_Tweaks.features) do assert(not LH_TweaksDB[f.key]) end
+enable:Click();for _,f in ipairs(LH_Tweaks.features) do assert(LH_TweaksDB[f.key]) end
+disable:Click();for _,f in ipairs(LH_Tweaks.features) do assert(not LH_TweaksDB[f.key]) end
 LH_TweaksDB.locationBarPosition={x=.2,y=.3};buttons['Location bar position']();assert(not LH_TweaksDB.locationBarPosition)
 LH_TweaksDB.tooltipPosition={x=.2,y=.3};buttons['Tooltip position']();assert(not LH_TweaksDB.tooltipPosition)
 LH_Tweaks:RegisterModule('demo','Demo',function(category,layout) layout:AddInitializer({header='Demo settings'}) end)

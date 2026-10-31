@@ -62,6 +62,26 @@
 
 <h2 style="color: #73c9c4;">Changelog</h2>
 
+<p><strong>0.10.4 - Forever and Retail</strong></p>
+
+<ul>
+  <li>Positioning is now the first settings section on every LH page that offers it.</li>
+</ul>
+
+<p><strong>0.10.3 - Forever and Retail</strong></p>
+
+<ul>
+  <li>Positioning settings now begin with enabled-by-default Lock location bar and Lock tooltip controls.</li>
+  <li>The other movable LH addons use the same lock-first settings layout.</li>
+</ul>
+
+<p><strong>0.10.2 - Forever and Retail</strong></p>
+
+<ul>
+  <li>Moved Enable all and Disable all into the settings title bar, directly left of Defaults.</li>
+  <li>Hide all and Show all on LH HideMe use the same title bar placement.</li>
+</ul>
+
 <p><strong>0.10.1 - Forever</strong></p>
 
 <ul>
