@@ -18,7 +18,7 @@
 
 <ul>
   <li><strong>Chat window freedom:</strong> Move standard chat windows beyond the screen edges and hide their scrollbars. Place the chat input above the window and give it a simple dark background with a muted gold border.</li>
-  <li><strong>Move the location bar and tooltip:</strong> Unlock and drag the zone name bar with its attached buttons, or move the default tooltip using its small drag handle. Lock either one at its saved position or reset it.</li>
+  <li><strong>Move the location bar and tooltip:</strong> Unlock and drag the zone name bar with its attached buttons, or move the default tooltip using its small drag handle and position preview. Lock either one at its saved position or reset it.</li>
   <li><strong>Merchant chores:</strong> Automatically repair your gear with your own gold when you can afford it, and sell grey items from your bags. If Leatrix Plus already handles either action, LH Tweaks leaves that action to it.</li>
   <li><strong>Fishing loot:</strong> Pick up fishing catches without briefly opening the loot window. If something remains, the normal loot window appears so you can collect it yourself. Other loot works as usual.</li>
 </ul>

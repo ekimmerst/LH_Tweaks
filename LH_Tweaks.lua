@@ -168,7 +168,7 @@ end
 
 local function ApplyTooltip()
     if not worldReady then pending = true; return end
-    if not GameTooltip or type(GameTooltip_SetDefaultAnchor) ~= "function" then
+    if not GameTooltip then
         if LH_TweaksDB.unlockTooltip or LH_TweaksDB.tooltipPosition then pending = true end
         return
     end
@@ -187,12 +187,38 @@ local function ApplyTooltip()
         handle:SetMovable(true)
         handle:EnableMouse(true)
         handle:RegisterForDrag("LeftButton")
+        local preview = CreateFrame("Frame", nil, UIParent)
+        state.preview = preview
+        preview:SetSize(170, 48)
+        preview:SetFrameStrata("TOOLTIP")
+        preview:SetPoint("BOTTOMRIGHT", handle, "CENTER", 0, 0)
+        preview:EnableMouse(false)
+        handle:SetFrameLevel(preview:GetFrameLevel() + 2)
+        local background = preview:CreateTexture(nil, "BACKGROUND")
+        background:SetAllPoints()
+        background:SetColorTexture(0.04, 0.05, 0.05, 0.9)
+        local label = preview:CreateFontString(nil, "OVERLAY")
+        label:SetPoint("CENTER", preview, "CENTER", 0, 0)
+        label:SetFont(STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+        label:SetTextColor(1, 0.82, 0.4)
+        label:SetText("Tooltip position")
         local circle = handle:CreateTexture(nil, "OVERLAY")
         circle:SetAllPoints()
-        circle:SetTexture("Interface\\COMMON\\Indicator-Gray")
-        circle:SetVertexColor(0.2, 1, 0.6)
+        circle:SetTexture("Interface\\AddOns\\LH_Tweaks\\DragCircle.tga")
+        local function PositionHandle()
+            if state.dragging then return end
+            local position = LH_TweaksDB.tooltipPosition
+            local x = position and position.x * UIParent:GetWidth() or UIParent:GetWidth() - 120
+            local y = position and position.y * UIParent:GetHeight() or 180
+            handle:ClearAllPoints()
+            handle:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x, y)
+        end
         state.position = function(tooltip)
-            if InCombat() then pending = true; return end
+            -- Keep the saved anchor when Blizzard places a nonprotected tooltip in combat.
+            if InCombat() and tooltip.IsProtected and tooltip:IsProtected() then
+                pending = true
+                return
+            end
             local position = LH_TweaksDB.tooltipPosition
             if position then
                 local scale = UIParent:GetEffectiveScale() / tooltip:GetEffectiveScale()
@@ -200,16 +226,12 @@ local function ApplyTooltip()
                 tooltip:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMLEFT",
                     position.x * UIParent:GetWidth() * scale, position.y * UIParent:GetHeight() * scale)
             end
-            if tooltip == GameTooltip and not state.dragging then
-                local x, y = tooltip:GetRight(), tooltip:GetBottom()
-                if x and y then
-                    local scale = tooltip:GetEffectiveScale() / UIParent:GetEffectiveScale()
-                    handle:ClearAllPoints()
-                    handle:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x * scale, y * scale)
-                end
-            end
+            if tooltip == GameTooltip then PositionHandle() end
         end
-        hooksecurefunc("GameTooltip_SetDefaultAnchor", state.position)
+        if type(GameTooltip_SetDefaultAnchor) == "function" then
+            hooksecurefunc("GameTooltip_SetDefaultAnchor", state.position)
+        end
+        GameTooltip:HookScript("OnShow", state.position)
         handle:SetScript("OnDragStart", function()
             if InCombat() or not LH_TweaksDB.unlockTooltip then return end
             state.dragging = true
@@ -219,11 +241,12 @@ local function ApplyTooltip()
             if not state.dragging then return end
             handle:StopMovingOrSizing()
             state.dragging = false
+            if InCombat() then pending = true; PositionHandle(); return end
             local x, y = handle:GetCenter()
             if x and y then
                 LH_TweaksDB.tooltipPosition = { x = x / UIParent:GetWidth(), y = y / UIParent:GetHeight() }
             end
-            if InCombat() then pending = true else state.position(GameTooltip) end
+            state.position(GameTooltip)
         end
         handle:SetScript("OnDragStop", state.stop)
         handle:SetScript("OnHide", state.stop)
@@ -236,23 +259,21 @@ local function ApplyTooltip()
             GameTooltip:ClearAllPoints()
             GameTooltip:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMLEFT", x * scale, y * scale)
         end)
+        PositionHandle()
     end
     local state = tooltipState
     if state.dragging then state.stop() end
     if tooltipReset then
         LH_TweaksDB.tooltipPosition = nil
         tooltipReset = nil
-        GameTooltip_SetDefaultAnchor(GameTooltip, GameTooltip:GetOwner() or UIParent)
-    elseif LH_TweaksDB.tooltipPosition then
-        state.position(GameTooltip)
-    elseif state.handle:GetNumPoints() == 0 then
-        if GameTooltip:IsShown() and GameTooltip:GetRight() then
-            state.position(GameTooltip)
-        else
+        if type(GameTooltip_SetDefaultAnchor) == "function" then
             GameTooltip_SetDefaultAnchor(GameTooltip, GameTooltip:GetOwner() or UIParent)
         end
+    elseif LH_TweaksDB.tooltipPosition then
+        state.position(GameTooltip)
     end
     state.handle:SetShown(LH_TweaksDB.unlockTooltip)
+    state.preview:SetShown(LH_TweaksDB.unlockTooltip)
 end
 
 local function DiscoverFrames()
