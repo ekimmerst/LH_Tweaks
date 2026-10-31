@@ -60,6 +60,14 @@
 
 <p>Thanks to Woffle of Dark Iron [US] and discoteq for <a href="https://www.curseforge.com/wow/addons/doomcooldownpulse">Doom_CooldownPulse</a>, and to Sideshow and Talyrius for <a href="https://www.curseforge.com/wow/addons/tinydps">TinyDPS</a>. Their work deserves recognition. LH CooldownPulse carries that pulse idea forward for this UI; LH TinyDPS is my own compact display for WoW's built-in meter data.</p>
 
+<h2 style="color: #73c9c4;">Changelog</h2>
+
+<p><strong>0.10.1 - Forever</strong></p>
+
+<ul>
+  <li>Added a movable tooltip-position preview and improved saved tooltip anchoring during combat.</li>
+</ul>
+
 <hr>
 
-<p><sup>*</sup> These addons were implemented with the help of Codex and GPT-6-SOL. I've tested them myself in the WoW beta client as thoroughly as I could, but some features may not yet work for every class or race. If you notice anything that doesn't work as expected, please report it in the CurseForge comments so I can take a look.</p>
+<p><sup>*</sup> These addons were implemented with the help of Codex and GPT-6-SOL. Some features may not yet work for every class or race. If you notice anything that doesn't work as expected, please report it in the CurseForge comments so I can take a look.</p>
