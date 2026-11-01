@@ -73,6 +73,15 @@ local header=SettingsPanel.list.Header
 assert(#header.children==3)
 local enable,disable=header.children[2],header.children[3]
 assert(enable.text=='Enable all' and disable.text=='Disable all')
+GameTooltip={}
+function GameTooltip:SetOwner(owner,anchor) assert(owner and anchor=='ANCHOR_BOTTOM') end
+function GameTooltip:SetText(text,r,g,b,alpha,wrap)
+ assert(type(text)=='string' and r==1 and g==1 and b==1 and alpha==1 and wrap==true)
+end
+function GameTooltip:Show() end
+function GameTooltip:Hide() end
+enable.scripts.OnEnter(enable)
+disable.scripts.OnEnter(disable)
 assert(disable.points[1][2]==header.DefaultsButton and disable.points[1][4]==-8)
 assert(enable.points[1][2]==disable and enable.points[1][4]==-6)
 SettingsPanel:DisplayCategory({name='Other'});assert(SettingsPanel.list.Header.Title.text=='Other')
@@ -86,11 +95,11 @@ local count=0
 for _,feature in ipairs(LH_Tweaks.features) do
  local s=registry['LH_Tweaks_'..feature.key]
  local lock=feature.key=='locationBar' or feature.key=='unlockTooltip'
- assert(s and s.default==lock)
+ assert(s and s.default==(lock or feature.key=='glowEquipment'))
  s.set(true);assert(s.get()==true and LH_TweaksDB[feature.key]~=lock)
  s.set(false);assert(s.get()==false and LH_TweaksDB[feature.key]==lock);count=count+1
 end
-assert(count==8)
+assert(count==9)
 SlashCmdList.LH_TWEAKS('auto-repair on')
 assert(registry.LH_Tweaks_autoRepair.get() and notices.LH_Tweaks_autoRepair>0)
 combat=true;registry.LH_Tweaks_moveChatBarToTop.set(true)
@@ -98,7 +107,7 @@ assert(LH_TweaksDB.moveChatBarToTop and LH_Tweaks:IsPending())
 LH_TweaksDB.locationBarPosition={x=.3,y=.2};LH_TweaksDB.tooltipPosition={x=.4,y=.4}
 fire('Settings.CategoryDefaulted', {name='Other'});assert(LH_TweaksDB.locationBarPosition)
 fire('Settings.CategoryDefaulted',c)
-for _,f in ipairs(LH_Tweaks.features) do assert(not LH_TweaksDB[f.key]) end
+for _,f in ipairs(LH_Tweaks.features) do assert(LH_TweaksDB[f.key]==(f.key=='glowEquipment')) end
 assert(not LH_TweaksDB.locationBarPosition and not LH_TweaksDB.tooltipPosition)
 assert(LH_TweaksDB.minimapPositionRepair==1 and LH_Tweaks:IsPending())
 combat=false;coreEvent.scripts.OnEvent(coreEvent,'PLAYER_REGEN_ENABLED')
@@ -111,4 +120,4 @@ assert(#registered==2 and LH_Tweaks.modules.demo.category.parent==c)
 LH_Tweaks:RegisterModule('demo','Demo',function() error('duplicate') end)
 e.scripts.OnEvent(e,'PLAYER_LOGIN');assert(#registered==2)
 ''')
-print('PASS: native category, title isolation, eight controls, chat/UI synchronization, combat deferral, scoped defaults, position resets, bulk controls and module registration')
+print('PASS: native category, title isolation, header tooltips, nine controls, chat/UI synchronization, combat deferral, scoped defaults, position resets, bulk controls and module registration')

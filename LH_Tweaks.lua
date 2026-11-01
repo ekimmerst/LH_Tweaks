@@ -596,6 +596,7 @@ local function AutoRepair()
 end
 
 local function Help()
+    Print("/lh_tweaks glow-equipment on|off - show a stronger quality glow on equipment in bags and on the character sheet.")
     Print("/lh_tweaks instant-fishing-loot on|off - collect fishing loot without flashing the loot window; show remaining items if collection fails.")
     Print("/lh_tweaks replace-chatbar-frame on|off - use the LH_ExpBar border for chat input, or restore the standard border.")
     Print("/lh_tweaks unlock-tooltip on|off|reset - drag the bottom-right circle, lock the tooltip, or restore its default position.")
@@ -618,6 +619,7 @@ SlashCmdList.LH_TWEAKS = function(message)
     if (command == "" or command == "help") and value == "" and extra == "" then
         Help()
     elseif command == "status" and value == "" and extra == "" then
+        Print("glow-equipment: " .. (LH_TweaksDB.glowEquipment and "on" or "off"))
         Print("remove-chatwindow-move-limit: " .. (LH_TweaksDB.chatWindow and "on" or "off") .. (pending and " (pending)" or ""))
         Print("move-chatbar-to-top: " .. (LH_TweaksDB.moveChatBarToTop and "on" or "off") .. (pending and " (pending)" or ""))
         Print("replace-chatbar-frame: " .. (LH_TweaksDB.replaceChatBarFrame and "on" or "off") .. (pending and " (pending)" or ""))
@@ -636,7 +638,9 @@ SlashCmdList.LH_TWEAKS = function(message)
         LH_TweaksDB.locationBar = enabled
         LH_TweaksDB.unlockTooltip = enabled
         LH_TweaksDB.instantFishingLoot = enabled
+        LH_TweaksDB.glowEquipment = enabled
         Apply()
+        if LH_Tweaks and LH_Tweaks.RefreshEquipmentGlow then LH_Tweaks:RefreshEquipmentGlow() end
         Print("All tweaks: " .. value .. (pending and " (layout changes pending; apply after combat or when UI frames load)" or ""))
     elseif command == "unlock-location-bar" and (value == "on" or value == "off" or value == "reset") and extra == "" then
         if value == "reset" then
@@ -660,6 +664,10 @@ SlashCmdList.LH_TWEAKS = function(message)
         LH_TweaksDB.instantFishingLoot = value == "on"
         Apply()
         Print("instant-fishing-loot: " .. value)
+    elseif command == "glow-equipment" and (value == "on" or value == "off") and extra == "" then
+        LH_TweaksDB.glowEquipment = value == "on"
+        if LH_Tweaks and LH_Tweaks.RefreshEquipmentGlow then LH_Tweaks:RefreshEquipmentGlow() end
+        Print("glow-equipment: " .. value)
     elseif command == "auto-sell-greys" and (value == "on" or value == "off") and extra == "" then
         if value == "on" and LeatrixHandles("autoSellGreys") then
             Print("Auto-sell greys is already handled by Leatrix Plus.")
@@ -704,6 +712,7 @@ Hub.features = {
     { key = "autoRepair", command = "auto-repair", section = "Merchants", label = "Automatically repair equipment", tooltip = "Repair at merchants using your own money when the full repair cost is affordable." },
     { key = "autoSellGreys", command = "auto-sell-greys", section = "Merchants", label = "Automatically sell grey items", tooltip = "Sell poor-quality items from your bags on your next merchant visit." },
     { key = "instantFishingLoot", command = "instant-fishing-loot", section = "Fishing", label = "Loot fishing catches without a loot window", tooltip = "Collect fishing loot immediately when you interact with the bobber, including by right-click. If items remain after one second, show the normal loot window for manual recovery. Normal non-fishing loot is unchanged. BetterFishing is not required." },
+    { key = "glowEquipment", command = "glow-equipment", section = "Items", label = "Glow equipment quality borders", tooltip = "Show a thicker, brighter quality-colored glow on uncommon or better equipment in Blizzard bags and on equipped character slots. Common white items keep their standard border. Enabled by default." },
 }
 
 function Hub:IsReady() return initialized end
@@ -722,10 +731,11 @@ end
 
 function Hub:RestoreDefaults()
     if not initialized then return end
-    for _, feature in ipairs(self.features) do LH_TweaksDB[feature.key] = false end
+    for _, feature in ipairs(self.features) do LH_TweaksDB[feature.key] = feature.key == "glowEquipment" end
     LH_TweaksDB.locationBarPosition, LH_TweaksDB.tooltipPosition = nil, nil
     locationReset, tooltipReset = true, true
     Apply()
+    if self.RefreshEquipmentGlow then self:RefreshEquipmentGlow() end
     if self.RefreshSettings then self:RefreshSettings() end
 end
 
@@ -745,6 +755,7 @@ events:SetScript("OnEvent", function(_, event, name)
         LH_TweaksDB.locationBar = LH_TweaksDB.locationBar == true
         LH_TweaksDB.unlockTooltip = LH_TweaksDB.unlockTooltip == true
         LH_TweaksDB.instantFishingLoot = LH_TweaksDB.instantFishingLoot == true
+        LH_TweaksDB.glowEquipment = LH_TweaksDB.glowEquipment ~= false
         if not ValidLocation(LH_TweaksDB.tooltipPosition) then LH_TweaksDB.tooltipPosition = nil end
         if not ValidLocation(LH_TweaksDB.locationBarPosition) then LH_TweaksDB.locationBarPosition = nil end
         initialized = true

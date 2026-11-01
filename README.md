@@ -21,6 +21,7 @@
   <li><strong>Move the location bar and tooltip:</strong> Unlock and drag the zone name bar with its attached buttons, or move the default tooltip using its small drag handle and position preview. Lock either one at its saved position or reset it.</li>
   <li><strong>Merchant chores:</strong> Automatically repair your gear with your own gold when you can afford it, and sell grey items from your bags. If Leatrix Plus already handles either action, LH Tweaks leaves that action to it.</li>
   <li><strong>Fishing loot:</strong> Pick up fishing catches without briefly opening the loot window. If something remains, the normal loot window appears so you can collect it yourself. Other loot works as usual.</li>
+  <li><strong>Equipment glow:</strong> Show a thicker, brighter quality-colored border on uncommon or better equipment in Blizzard bags and on the character sheet. Common white items keep their standard border. This is enabled by default and can be turned off in Settings or with <code>/lh_tweaks glow-equipment off</code>.</li>
 </ul>
 
 <p>Find these options under <strong>Options → AddOns → LH Tweaks</strong>. Settings are saved per character. Use <strong>Enable all</strong> or <strong>Disable all</strong> there, or type <code>/lh_tweaks all on</code> or <code>/lh_tweaks all off</code>. Type <code>/lh_tweaks help</code> for individual commands. Merchant options take effect on your next merchant visit.</p>
@@ -61,6 +62,24 @@
 <p>Thanks to Woffle of Dark Iron [US] and discoteq for <a href="https://www.curseforge.com/wow/addons/doomcooldownpulse">Doom_CooldownPulse</a>, and to Sideshow and Talyrius for <a href="https://www.curseforge.com/wow/addons/tinydps">TinyDPS</a>. Their work deserves recognition. LH CooldownPulse carries that pulse idea forward for this UI; LH TinyDPS is my own compact display for WoW's built-in meter data.</p>
 
 <h2 style="color: #73c9c4;">Changelog</h2>
+
+<p><strong>0.10.8 - Forever and Retail</strong></p>
+
+<ul>
+  <li>Keep the standard border on common white equipment; the extra glow now starts at uncommon quality.</li>
+</ul>
+
+<p><strong>0.10.7 - Forever and Retail</strong></p>
+
+<ul>
+  <li>Added an enabled-by-default quality glow for equipment in Blizzard bags and on the character sheet.</li>
+</ul>
+
+<p><strong>0.10.6 - Forever and Retail</strong></p>
+
+<ul>
+  <li>Fixed an error when hovering over Enable all or Disable all in the LH Tweaks settings header.</li>
+</ul>
 
 <p><strong>0.10.5 - Forever and Retail</strong></p>
 

@@ -32,7 +32,7 @@ local function SyncHeaderActions(panel, category)
             button:SetScript("OnEnter", function(self)
                 if not self.tooltip then return end
                 GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
-                GameTooltip:SetText(self.tooltip, 1, 1, 1, true)
+                GameTooltip:SetText(self.tooltip, 1, 1, 1, 1, true)
                 GameTooltip:Show()
             end)
             button:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -99,7 +99,7 @@ local function RegisterSettings()
         variables[#variables + 1] = variable
         local isLock = lockLabels[feature.key] ~= nil
         local setting = Settings.RegisterProxySetting(category, variable, "boolean",
-            lockLabels[feature.key] or feature.label, isLock,
+            lockLabels[feature.key] or feature.label, isLock or feature.key == "glowEquipment",
             function()
                 local enabled = Hub:GetFeature(feature.key)
                 if isLock then return not enabled end
