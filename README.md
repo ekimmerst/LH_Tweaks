@@ -41,7 +41,7 @@
   <li><strong>LH NameplateQuestInfo:</strong> Adds quest markers and objective progress to relevant nameplates.</li>
   <li><strong>LH NameplateThreatColors:</strong> Colors Blizzard nameplate health bars by threat for your role while grouped.</li>
   <li><strong>LH PetStats:</strong> Shows pet loyalty by the pet portrait, with a matching small progress bar.</li>
-  <li><strong>LH Range:</strong> Shows melee range, with additional spell-range zones for Shamans and Hunters.</li>
+  <li><strong>LH Range:</strong> Shows melee range, configurable spell-range zones for every class, and a live non-Mana resource bar in melee range.</li>
   <li><strong>LH BuffReminders:</strong> Reminds you when class buffs are missing.</li>
   <li><strong>LH Skills:</strong> Shows profession skills in a compact, movable display with rank colors and skill-up flashes.</li>
   <li><strong>LH Stats:</strong> Keeps your money, free bag slots and remaining ammo visible below the minimap.</li>
@@ -51,7 +51,7 @@
 
 <h2 style="color: #c78be6;">Installation</h2>
 
-<p>Install LH Tweaks first, then add whichever companion addons you want. Each companion requires LH Tweaks. For a manual installation, keep each addon in its own <code>Interface/AddOns</code> folder and restart the game after adding new addons.</p>
+<p>Install LH Tweaks first, then add whichever companion addons you want. LH NameplateQuestInfo can also run without LH Tweaks; the other companions require it. For a manual installation, keep each addon in its own <code>Interface/AddOns</code> folder and restart the game after adding new addons.</p>
 
 <h2 style="color: #c78be6;">Feedback</h2>
 
