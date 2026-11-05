@@ -10,6 +10,42 @@ local locationState
 local locationReset = false
 local worldReady = false
 local tooltipState, tooltipReset
+local questSortFrames = {}
+local questSortApplied
+
+local function ApplyQuestSort()
+    local enabled = LH_TweaksDB.sortQuestsByLevel == true
+    local changed = questSortApplied ~= enabled
+    questSortApplied = enabled
+    for _, frame in pairs({ QuestObjectiveTracker, CampaignQuestObjectiveTracker }) do
+        if frame and type(frame.BuildQuestWatchInfos) == "function" then
+            if not questSortFrames[frame] then
+                local original = frame.BuildQuestWatchInfos
+                frame.BuildQuestWatchInfos = function(self, ...)
+                    local infos = original(self, ...)
+                    if LH_TweaksDB.sortQuestsByLevel and #infos > 1 then
+                        local levels = {}
+                        for _, entry in ipairs(infos) do
+                            local questID = entry.quest and entry.quest.questID
+                            local index = questID and C_QuestLog.GetLogIndexForQuestID(questID)
+                            local info = index and C_QuestLog.GetInfo(index)
+                            levels[entry] = info and info.level or math.huge
+                        end
+                        table.sort(infos, function(a, b)
+                            if levels[a] ~= levels[b] then return levels[a] < levels[b] end
+                            return a.index < b.index
+                        end)
+                    end
+                    return infos
+                end
+                questSortFrames[frame] = true
+                frame:MarkDirty()
+            elseif changed then
+                frame:MarkDirty()
+            end
+        end
+    end
+end
 
 local function UpdateLocationLayout(state, detached)
     local cluster = MinimapCluster
@@ -508,6 +544,7 @@ Apply = function()
     end
     ApplyLocationBar()
     ApplyTooltip()
+    ApplyQuestSort()
     applied = LH_TweaksDB.chatWindow == true
     InstallFunctionHooks()
     local frames = DiscoverFrames()
@@ -596,6 +633,7 @@ local function AutoRepair()
 end
 
 local function Help()
+    Print("/lh_tweaks sort-quests-by-level on|off - sort tracked quests from lowest to highest quest level.")
     Print("/lh_tweaks glow-equipment on|off - show a stronger quality glow on equipment in bags and on the character sheet.")
     Print("/lh_tweaks instant-fishing-loot on|off - collect fishing loot without flashing the loot window; show remaining items if collection fails.")
     Print("/lh_tweaks replace-chatbar-frame on|off - use the LH_ExpBar border for chat input, or restore the standard border.")
@@ -619,6 +657,7 @@ SlashCmdList.LH_TWEAKS = function(message)
     if (command == "" or command == "help") and value == "" and extra == "" then
         Help()
     elseif command == "status" and value == "" and extra == "" then
+        Print("sort-quests-by-level: " .. (LH_TweaksDB.sortQuestsByLevel and "on" or "off"))
         Print("glow-equipment: " .. (LH_TweaksDB.glowEquipment and "on" or "off"))
         Print("remove-chatwindow-move-limit: " .. (LH_TweaksDB.chatWindow and "on" or "off") .. (pending and " (pending)" or ""))
         Print("move-chatbar-to-top: " .. (LH_TweaksDB.moveChatBarToTop and "on" or "off") .. (pending and " (pending)" or ""))
@@ -639,6 +678,7 @@ SlashCmdList.LH_TWEAKS = function(message)
         LH_TweaksDB.unlockTooltip = enabled
         LH_TweaksDB.instantFishingLoot = enabled
         LH_TweaksDB.glowEquipment = enabled
+        LH_TweaksDB.sortQuestsByLevel = enabled
         Apply()
         if LH_Tweaks and LH_Tweaks.RefreshEquipmentGlow then LH_Tweaks:RefreshEquipmentGlow() end
         Print("All tweaks: " .. value .. (pending and " (layout changes pending; apply after combat or when UI frames load)" or ""))
@@ -668,6 +708,10 @@ SlashCmdList.LH_TWEAKS = function(message)
         LH_TweaksDB.glowEquipment = value == "on"
         if LH_Tweaks and LH_Tweaks.RefreshEquipmentGlow then LH_Tweaks:RefreshEquipmentGlow() end
         Print("glow-equipment: " .. value)
+    elseif command == "sort-quests-by-level" and (value == "on" or value == "off") and extra == "" then
+        LH_TweaksDB.sortQuestsByLevel = value == "on"
+        Apply()
+        Print("sort-quests-by-level: " .. value)
     elseif command == "auto-sell-greys" and (value == "on" or value == "off") and extra == "" then
         if value == "on" and LeatrixHandles("autoSellGreys") then
             Print("Auto-sell greys is already handled by Leatrix Plus.")
@@ -704,6 +748,7 @@ end
 LH_Tweaks = { modules = {} }
 local Hub = LH_Tweaks
 Hub.features = {
+    { key = "sortQuestsByLevel", command = "sort-quests-by-level", section = "Quests", label = "Sort tracked quests by level (ascending)", tooltip = "Show lower-level quests first in Blizzard's quest tracker. Quests at the same level keep their tracked order." },
     { key = "chatWindow", command = "remove-chatwindow-move-limit", section = "Chat", label = "Allow chat windows beyond screen edges", tooltip = "Remove movement limits and hide standard chat scrollbars." },
     { key = "moveChatBarToTop", command = "move-chatbar-to-top", section = "Chat", label = "Move chat input above the chat window", tooltip = "Place the input field above the chat window instead of below it." },
     { key = "replaceChatBarFrame", command = "replace-chatbar-frame", section = "Chat", label = "Replace the chat input border", tooltip = "Use the black background and muted gold border from LH_ExpBar. Disable to restore the Blizzard border." },
@@ -756,6 +801,7 @@ events:SetScript("OnEvent", function(_, event, name)
         LH_TweaksDB.unlockTooltip = LH_TweaksDB.unlockTooltip == true
         LH_TweaksDB.instantFishingLoot = LH_TweaksDB.instantFishingLoot == true
         LH_TweaksDB.glowEquipment = LH_TweaksDB.glowEquipment ~= false
+        LH_TweaksDB.sortQuestsByLevel = LH_TweaksDB.sortQuestsByLevel == true
         if not ValidLocation(LH_TweaksDB.tooltipPosition) then LH_TweaksDB.tooltipPosition = nil end
         if not ValidLocation(LH_TweaksDB.locationBarPosition) then LH_TweaksDB.locationBarPosition = nil end
         initialized = true
