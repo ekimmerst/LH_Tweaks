@@ -82,6 +82,10 @@ local function RegisterSettings()
 
     local category, layout = Settings.RegisterVerticalLayoutCategory("LH Tweaks")
     Hub.category = category
+    LH_LayoutProfiles:AddSetting(category, layout, addonName)
+    Button(layout, "Use the selected settings source in all LH addons", "Apply to all",
+        function() LH_LayoutProfiles:ApplyTweaksSourceToAll() end,
+        "Choosing a source in LH Tweaks applies it to all enabled LH addons automatically. Use this button to apply the current choice again after enabling another addon. Addons without saved settings from the selected character stay unchanged.")
     local orderedFeatures = {}
     for _, feature in ipairs(Hub.features) do
         if feature.section == "Positioning" then orderedFeatures[#orderedFeatures + 1] = feature end

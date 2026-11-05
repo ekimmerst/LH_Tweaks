@@ -804,6 +804,9 @@ events:SetScript("OnEvent", function(_, event, name)
         LH_TweaksDB.sortQuestsByLevel = LH_TweaksDB.sortQuestsByLevel == true
         if not ValidLocation(LH_TweaksDB.tooltipPosition) then LH_TweaksDB.tooltipPosition = nil end
         if not ValidLocation(LH_TweaksDB.locationBarPosition) then LH_TweaksDB.locationBarPosition = nil end
+        local profileKeys = {"locationBarPosition", "tooltipPosition"}
+        for _, feature in ipairs(Hub.features) do profileKeys[#profileKeys + 1] = feature.key end
+        LH_LayoutProfiles:Register(addonName, LH_TweaksDB, LH_TweaksDB, profileKeys)
         initialized = true
     end
     if event == "MERCHANT_SHOW" then

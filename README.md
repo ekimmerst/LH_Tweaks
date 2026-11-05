@@ -27,6 +27,10 @@
 
 <p>Find these options under <strong>Options → AddOns → LH Tweaks</strong>. Settings are saved per character. Use <strong>Enable all</strong> or <strong>Disable all</strong> there, or type <code>/lh_tweaks all on</code> or <code>/lh_tweaks all off</code>. Type <code>/lh_tweaks help</code> for individual commands. Merchant options take effect on your next merchant visit.</p>
 
+<h2 style="color: #c78be6;">Use another character's settings</h2>
+
+<p>Configure the main character, then log out to save its settings. On another character, choose the main character under <strong>Use settings from</strong> in LH Tweaks. The choice is applied to every enabled LH addon with a settings profile. <strong>Apply to all</strong> repeats it after enabling another addon. You can choose a different source for any addon on its own settings page. Choose <strong>This character</strong> in LH Tweaks to restore each addon's own settings. The UI reloads when a source changes. Display, appearance, visibility, and other general options are borrowed. Monitored buffs and exceptions in LH BuffReminders, class spells in LH Range, per-character cooldown filters, and combat-session data remain separate. A source character appears in an addon's list after that addon has been loaded on the character and the character has logged out. WoW: Forever's complete first and last name is shown after that character logs in once with this version. If an addon has no saved settings for the selected source, the bulk action leaves that addon's choice unchanged.</p>
+
 <h2 style="color: #d9a94b;">The companion addons</h2>
 
 <p>Each of these is a separate download and uses LH Tweaks for its settings:</p>
@@ -63,6 +67,14 @@
 <p>Thanks to Woffle of Dark Iron [US] and discoteq for <a href="https://www.curseforge.com/wow/addons/doomcooldownpulse">Doom_CooldownPulse</a>, and to Sideshow and Talyrius for <a href="https://www.curseforge.com/wow/addons/tinydps">TinyDPS</a>. Their work deserves recognition. LH CooldownPulse carries that pulse idea forward for this UI; LH TinyDPS is my own compact display for WoW's built-in meter data.</p>
 
 <h2 style="color: #73c9c4;">Changelog</h2>
+
+<p><strong>0.11.0 - Forever and Retail</strong></p>
+
+<ul>
+  <li>Added per-addon character settings profiles and an account-wide snapshot store for sharing general options across characters.</li>
+  <li>Choosing a source in LH Tweaks applies it to enabled companion addons; Apply to all repeats the choice after enabling another addon.</li>
+  <li>Show WoW: Forever first and last names in the source list after each character logs in with this version. Existing profile keys remain compatible.</li>
+</ul>
 
 <p><strong>0.10.9 - Forever and Retail</strong></p>
 

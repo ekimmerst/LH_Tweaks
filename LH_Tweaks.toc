@@ -3,10 +3,12 @@
 ## Group: LH_Tweaks
 ## Notes: LiteHawk Tweaks configuration hub and standard UI improvements.
 ## Author: LH_Tweaks
-## Version: 0.10.9
+## Version: 0.11.0
 ## IconTexture: Interface\AddOns\LH_Tweaks\Icon.tga
+## SavedVariables: LH_TweaksLayoutProfiles
 ## SavedVariablesPerCharacter: LH_TweaksDB
 
+LayoutProfiles.lua
 LH_Tweaks.lua
 EquipmentGlow.lua
 Settings.lua
