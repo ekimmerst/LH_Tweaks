@@ -26,10 +26,17 @@ local function ApplyQuestSort()
                     if LH_TweaksDB.sortQuestsByLevel and #infos > 1 then
                         local levels = {}
                         for _, entry in ipairs(infos) do
-                            local questID = entry.quest and entry.quest.questID
-                            local index = questID and C_QuestLog.GetLogIndexForQuestID(questID)
-                            local info = index and C_QuestLog.GetInfo(index)
-                            levels[entry] = info and info.level or math.huge
+                            -- QuestCache already contains the quest log info. During a
+                            -- live update the API can return secret quest data, which
+                            -- must not reach a Lua sort comparison.
+                            if issecretvalue and (issecretvalue(entry) or issecretvalue(entry.quest)) then
+                                return infos
+                            end
+                            local level = entry.quest and entry.quest.level
+                            if (issecretvalue and issecretvalue(level)) or type(level) ~= "number" then
+                                return infos
+                            end
+                            levels[entry] = level
                         end
                         table.sort(infos, function(a, b)
                             if levels[a] ~= levels[b] then return levels[a] < levels[b] end

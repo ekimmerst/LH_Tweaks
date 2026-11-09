@@ -49,6 +49,7 @@
   <li><strong>LH Range:</strong> Shows melee range, configurable spell-range zones for every class, and a live non-Mana resource bar in melee range.</li>
   <li><strong>LH BuffReminders:</strong> Reminds you when class buffs are missing.</li>
   <li><strong>LH Skills:</strong> Shows profession skills in a compact, movable display with rank colors and skill-up flashes.</li>
+  <li><strong>LH Socials:</strong> Shows a compact, auto-hiding guild roster from a handle at the screen edge, with online members, sorting and whispers.</li>
   <li><strong>LH Stats:</strong> Keeps your money, free bag slots and remaining ammo visible below the minimap.</li>
   <li><strong>LH SwingTimer:</strong> Adds minimal main-hand and ranged swing timers beneath the player cast bar.</li>
   <li><strong>LH TinyDPS:</strong> A compact damage and healing display using the game's built-in meter data.</li>
@@ -67,6 +68,13 @@
 <p>Thanks to Woffle of Dark Iron [US] and discoteq for <a href="https://www.curseforge.com/wow/addons/doomcooldownpulse">Doom_CooldownPulse</a>, and to Sideshow and Talyrius for <a href="https://www.curseforge.com/wow/addons/tinydps">TinyDPS</a>. Their work deserves recognition. LH CooldownPulse carries that pulse idea forward for this UI; LH TinyDPS is my own compact display for WoW's built-in meter data.</p>
 
 <h2 style="color: #73c9c4;">Changelog</h2>
+
+<p><strong>0.11.1 - Forever and Retail</strong></p>
+
+<ul>
+  <li>Use cached quest levels when sorting the tracker and leave its order unchanged if the client supplies restricted quest data.</li>
+  <li>Added LH Socials to the companion addon list.</li>
+</ul>
 
 <p><strong>0.11.0 - Forever and Retail</strong></p>
 
