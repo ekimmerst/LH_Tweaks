@@ -10,6 +10,63 @@ local locationState
 local locationReset = false
 local worldReady = false
 local tooltipState, tooltipReset
+local tooltipBarState
+local tooltipBarTextures = {
+    { key = "Blizzard", path = "Interface\\TargetingFrame\\UI-StatusBar" },
+    { key = "Blizzard Character Skills Bar", path = "Interface\\PaperDollInfoFrame\\UI-Character-Skills-Bar" },
+    { key = "Blizzard Raid Bar", path = "Interface\\RaidFrame\\Raid-Bar-Hp-Fill" },
+    { key = "Solid", path = "Interface\\Buttons\\WHITE8X8" },
+}
+
+local function TooltipMedia()
+    return LibStub and LibStub("LibSharedMedia-3.0", true)
+end
+
+local function TooltipBarPath(key)
+    if type(key) ~= "string" or key == "default" then return nil end
+    local media = TooltipMedia()
+    if media then
+        local path = media:HashTable("statusbar")[key]
+        if path then return path end
+    end
+    for _, entry in ipairs(tooltipBarTextures) do
+        if entry.key == key then return entry.path end
+    end
+end
+
+local function ApplyTooltipBarTexture()
+    local bar = GameTooltipStatusBar
+    if not bar then return end
+    if not tooltipBarState then
+        local texture = bar:GetStatusBarTexture()
+        tooltipBarState = { bar = bar, original = texture and texture:GetTexture() or tooltipBarTextures[1].path,
+            atlas = texture and texture.GetAtlas and texture:GetAtlas() }
+        hooksecurefunc(bar, "SetStatusBarTexture", function(self)
+            local state = tooltipBarState
+            if state and not state.busy and state.bar == self and LH_TweaksDB then
+                local path = TooltipBarPath(LH_TweaksDB.tooltipHealthBarTexture)
+                if path then
+                    state.busy = true
+                    self:SetStatusBarTexture(path)
+                    state.busy = false
+                end
+            end
+        end)
+    end
+    local state = tooltipBarState
+    local path = TooltipBarPath(LH_TweaksDB.tooltipHealthBarTexture)
+    if not path and not state.applied then return end
+    state.busy = true
+    if path then
+        bar:SetStatusBarTexture(path)
+    elseif state.atlas then
+        bar:GetStatusBarTexture():SetAtlas(state.atlas)
+    elseif state.original then
+        bar:SetStatusBarTexture(state.original)
+    end
+    state.busy = false
+    state.applied = path ~= nil
+end
 local questSortFrames = {}
 local questSortApplied
 
@@ -551,6 +608,7 @@ Apply = function()
     end
     ApplyLocationBar()
     ApplyTooltip()
+    ApplyTooltipBarTexture()
     ApplyQuestSort()
     applied = LH_TweaksDB.chatWindow == true
     InstallFunctionHooks()
@@ -754,6 +812,35 @@ end
 -- Shared configuration host. Companion addons can register their own pages.
 LH_Tweaks = { modules = {} }
 local Hub = LH_Tweaks
+
+function Hub:GetTooltipBarTextures()
+    local options, seen = {}, {}
+    for _, entry in ipairs(tooltipBarTextures) do
+        options[#options + 1] = { key = entry.key, path = TooltipBarPath(entry.key) }
+        seen[entry.key] = true
+    end
+    local media = TooltipMedia()
+    if media then
+        for _, key in ipairs(media:List("statusbar") or {}) do
+            if not seen[key] then
+                local path = TooltipBarPath(key)
+                if path then options[#options + 1] = { key = key, path = path } end
+            end
+        end
+    end
+    return options
+end
+
+function Hub:GetDefaultTooltipBarTexture()
+    return tooltipBarState and tooltipBarState.original or tooltipBarTextures[1].path
+end
+
+function Hub:SetTooltipBarTexture(key)
+    if not LH_TweaksDB or (key ~= "default" and not TooltipBarPath(key)) then return end
+    LH_TweaksDB.tooltipHealthBarTexture = key
+    ApplyTooltipBarTexture()
+    if self.RefreshSettings then self:RefreshSettings() end
+end
 Hub.features = {
     { key = "sortQuestsByLevel", command = "sort-quests-by-level", section = "Quests", label = "Sort tracked quests by level (ascending)", tooltip = "Show lower-level quests first in Blizzard's quest tracker. Quests at the same level keep their tracked order." },
     { key = "chatWindow", command = "remove-chatwindow-move-limit", section = "Chat", label = "Allow chat windows beyond screen edges", tooltip = "Remove movement limits and hide standard chat scrollbars." },
@@ -785,6 +872,7 @@ function Hub:RestoreDefaults()
     if not initialized then return end
     for _, feature in ipairs(self.features) do LH_TweaksDB[feature.key] = feature.key == "glowEquipment" end
     LH_TweaksDB.locationBarPosition, LH_TweaksDB.tooltipPosition = nil, nil
+    LH_TweaksDB.tooltipHealthBarTexture = "default"
     locationReset, tooltipReset = true, true
     Apply()
     if self.RefreshEquipmentGlow then self:RefreshEquipmentGlow() end
@@ -809,9 +897,10 @@ events:SetScript("OnEvent", function(_, event, name)
         LH_TweaksDB.instantFishingLoot = LH_TweaksDB.instantFishingLoot == true
         LH_TweaksDB.glowEquipment = LH_TweaksDB.glowEquipment ~= false
         LH_TweaksDB.sortQuestsByLevel = LH_TweaksDB.sortQuestsByLevel == true
+        if type(LH_TweaksDB.tooltipHealthBarTexture) ~= "string" then LH_TweaksDB.tooltipHealthBarTexture = "default" end
         if not ValidLocation(LH_TweaksDB.tooltipPosition) then LH_TweaksDB.tooltipPosition = nil end
         if not ValidLocation(LH_TweaksDB.locationBarPosition) then LH_TweaksDB.locationBarPosition = nil end
-        local profileKeys = {"locationBarPosition", "tooltipPosition"}
+        local profileKeys = {"locationBarPosition", "tooltipPosition", "tooltipHealthBarTexture"}
         for _, feature in ipairs(Hub.features) do profileKeys[#profileKeys + 1] = feature.key end
         LH_LayoutProfiles:Register(addonName, LH_TweaksDB, LH_TweaksDB, profileKeys)
         initialized = true

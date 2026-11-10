@@ -18,7 +18,7 @@
 
 <ul>
   <li><strong>Chat window freedom:</strong> Move standard chat windows beyond the screen edges and hide their scrollbars. Place the chat input above the window and give it a simple dark background with a muted gold border.</li>
-  <li><strong>Move the location bar and tooltip:</strong> Unlock and drag the zone name bar with its attached buttons, or move the default tooltip using its small drag handle and position preview. Lock either one at its saved position or reset it.</li>
+  <li><strong>Move the location bar and tooltip:</strong> Unlock and drag the zone name bar with its attached buttons, or move the default tooltip using its small drag handle and position preview. Lock either one at its saved position or reset it. Choose the texture of the health bar below the tooltip from a dropdown with previews of available status bar textures.</li>
   <li><strong>Merchant chores:</strong> Automatically repair your gear with your own gold when you can afford it, and sell grey items from your bags. If Leatrix Plus already handles either action, LH Tweaks leaves that action to it.</li>
   <li><strong>Fishing loot:</strong> Pick up fishing catches without briefly opening the loot window. If something remains, the normal loot window appears so you can collect it yourself. Other loot works as usual.</li>
   <li><strong>Equipment glow:</strong> Show a thicker, brighter quality-colored border on uncommon or better equipment in Blizzard bags and on the character sheet. Common white items keep their standard border. This is enabled by default and can be turned off in Settings or with <code>/lh_tweaks glow-equipment off</code>.</li>
@@ -68,6 +68,12 @@
 <p>Thanks to Woffle of Dark Iron [US] and discoteq for <a href="https://www.curseforge.com/wow/addons/doomcooldownpulse">Doom_CooldownPulse</a>, and to Sideshow and Talyrius for <a href="https://www.curseforge.com/wow/addons/tinydps">TinyDPS</a>. Their work deserves recognition. LH CooldownPulse carries that pulse idea forward for this UI; LH TinyDPS is my own compact display for WoW's built-in meter data.</p>
 
 <h2 style="color: #73c9c4;">Changelog</h2>
+
+<p><strong>0.11.2 - Forever and Retail</strong></p>
+
+<ul>
+  <li>Added a per-character tooltip health bar texture dropdown with previews of built-in and available LibSharedMedia status bar textures.</li>
+</ul>
 
 <p><strong>0.11.1 - Forever and Retail</strong></p>
 

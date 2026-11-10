@@ -138,6 +138,27 @@ local function RegisterSettings()
             Button(layout, "Tooltip position", "Reset position", function()
                 Hub:RunCommand("unlock-tooltip reset")
             end, "Restore Blizzard's default tooltip anchor without changing its lock setting.")
+            local variable = "LH_Tweaks_tooltipHealthBarTexture"
+            variables[#variables + 1] = variable
+            local setting = Settings.RegisterProxySetting(category, variable, "string",
+                "Tooltip health bar texture", "default",
+                function() return LH_TweaksDB.tooltipHealthBarTexture or "default" end,
+                function(value) Hub:SetTooltipBarTexture(value) end)
+            local function Choices()
+                local container = Settings.CreateControlTextContainer()
+                local function Preview(path)
+                    return "|T" .. path .. ":12:72|t "
+                end
+                container:Add("default", Preview(Hub:GetDefaultTooltipBarTexture()) .. "Default",
+                    "Use the original tooltip health bar texture.")
+                for _, entry in ipairs(Hub:GetTooltipBarTextures()) do
+                    container:Add(entry.key, Preview(entry.path) .. entry.key,
+                        "Use this texture for the health bar below the default tooltip.")
+                end
+                return container:GetData()
+            end
+            Settings.CreateDropdown(category, setting, Choices,
+                "Choose a texture for the health bar below the default tooltip. Each choice shows a preview; the selection is saved per character.")
         end
     end
     Hub:RegisterHeaderActions(category,
