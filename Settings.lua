@@ -113,6 +113,9 @@ local function RegisterSettings()
                 Hub:RunCommand(feature.command .. ((isLock ~= value) and " on" or " off"))
             end)
         local initializer = Settings.CreateCheckbox(category, setting, function()
+            if not Hub:IsFeatureAvailable(feature.key) then
+                return "Quest sorting is unavailable on clients with secret auras because changing Blizzard's tracker taints its aura checks."
+            end
             if Hub:IsFeatureManaged(feature.key) then
                 return "Already handled by Leatrix Plus. Disable the corresponding option in Leatrix Plus to use LH Tweaks instead."
             end
@@ -124,7 +127,9 @@ local function RegisterSettings()
             end
             return tooltip .. " Changes are saved per character; layout changes wait until combat ends."
         end)
-        initializer:AddModifyPredicate(function() return not Hub:IsFeatureManaged(feature.key) end)
+        initializer:AddModifyPredicate(function()
+            return Hub:IsFeatureAvailable(feature.key) and not Hub:IsFeatureManaged(feature.key)
+        end)
         if feature.key == "autoRepair" or feature.key == "autoSellGreys" then
             local notice = CreateSettingsListSectionHeaderInitializer("Already handled by Leatrix Plus")
             notice:AddShownPredicate(function() return Hub:IsFeatureManaged(feature.key) end)

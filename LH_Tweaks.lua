@@ -69,8 +69,13 @@ local function ApplyTooltipBarTexture()
 end
 local questSortFrames = {}
 local questSortApplied
+-- Replacing a Blizzard tracker method taints subsequent objective-tracker updates.
+-- On clients with secret auras, ScenarioObjectiveTracker then cannot call
+-- ShouldShowMawBuffs during combat, even if quest sorting is currently off.
+local questSortSupported = not (C_Secrets and type(C_Secrets.ShouldAurasBeSecret) == "function")
 
 local function ApplyQuestSort()
+    if not questSortSupported then return end
     local enabled = LH_TweaksDB.sortQuestsByLevel == true
     local changed = questSortApplied ~= enabled
     questSortApplied = enabled
@@ -698,7 +703,9 @@ local function AutoRepair()
 end
 
 local function Help()
-    Print("/lh_tweaks sort-quests-by-level on|off - sort tracked quests from lowest to highest quest level.")
+    if questSortSupported then
+        Print("/lh_tweaks sort-quests-by-level on|off - sort tracked quests from lowest to highest quest level.")
+    end
     Print("/lh_tweaks glow-equipment on|off - show a stronger quality glow on equipment in bags and on the character sheet.")
     Print("/lh_tweaks instant-fishing-loot on|off - collect fishing loot without flashing the loot window; show remaining items if collection fails.")
     Print("/lh_tweaks replace-chatbar-frame on|off - use the LH_ExpBar border for chat input, or restore the standard border.")
@@ -722,7 +729,7 @@ SlashCmdList.LH_TWEAKS = function(message)
     if (command == "" or command == "help") and value == "" and extra == "" then
         Help()
     elseif command == "status" and value == "" and extra == "" then
-        Print("sort-quests-by-level: " .. (LH_TweaksDB.sortQuestsByLevel and "on" or "off"))
+        Print("sort-quests-by-level: " .. (not questSortSupported and "unavailable" or LH_TweaksDB.sortQuestsByLevel and "on" or "off"))
         Print("glow-equipment: " .. (LH_TweaksDB.glowEquipment and "on" or "off"))
         Print("remove-chatwindow-move-limit: " .. (LH_TweaksDB.chatWindow and "on" or "off") .. (pending and " (pending)" or ""))
         Print("move-chatbar-to-top: " .. (LH_TweaksDB.moveChatBarToTop and "on" or "off") .. (pending and " (pending)" or ""))
@@ -743,7 +750,7 @@ SlashCmdList.LH_TWEAKS = function(message)
         LH_TweaksDB.unlockTooltip = enabled
         LH_TweaksDB.instantFishingLoot = enabled
         LH_TweaksDB.glowEquipment = enabled
-        LH_TweaksDB.sortQuestsByLevel = enabled
+        LH_TweaksDB.sortQuestsByLevel = questSortSupported and enabled
         Apply()
         if LH_Tweaks and LH_Tweaks.RefreshEquipmentGlow then LH_Tweaks:RefreshEquipmentGlow() end
         Print("All tweaks: " .. value .. (pending and " (layout changes pending; apply after combat or when UI frames load)" or ""))
@@ -774,6 +781,10 @@ SlashCmdList.LH_TWEAKS = function(message)
         if LH_Tweaks and LH_Tweaks.RefreshEquipmentGlow then LH_Tweaks:RefreshEquipmentGlow() end
         Print("glow-equipment: " .. value)
     elseif command == "sort-quests-by-level" and (value == "on" or value == "off") and extra == "" then
+        if not questSortSupported then
+            Print("Quest sorting is unavailable on clients with secret auras.")
+            return
+        end
         LH_TweaksDB.sortQuestsByLevel = value == "on"
         Apply()
         Print("sort-quests-by-level: " .. value)
@@ -858,7 +869,11 @@ function Hub:IsReady() return initialized end
 function Hub:IsPending() return pending end
 function Hub:IsFeatureManaged(key) return LeatrixHandles(key) end
 function Hub:GetFeature(key)
+    if key == "sortQuestsByLevel" and not questSortSupported then return false end
     return not LeatrixHandles(key) and LH_TweaksDB and LH_TweaksDB[key] == true or false
+end
+function Hub:IsFeatureAvailable(key)
+    return key ~= "sortQuestsByLevel" or questSortSupported
 end
 function Hub:RunCommand(command) SlashCmdList.LH_TWEAKS(command) end
 function Hub:RegisterModule(id, title, build)
