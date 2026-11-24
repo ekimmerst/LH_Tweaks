@@ -711,6 +711,8 @@ local function Help()
     Print("/lh_tweaks replace-chatbar-frame on|off - use the LH_ExpBar border for chat input, or restore the standard border.")
     Print("/lh_tweaks unlock-tooltip on|off|reset - drag the bottom-right circle, lock the tooltip, or restore its default position.")
     Print("/lh_tweaks tooltip-player-details on|off - color player names by class and show available talents and specialization.")
+    Print("/lh_tweaks tooltip-target-of-target on|off - show the tooltip unit's target in its class color.")
+    Print("/lh_tweaks tooltip-castbar on|off - show the tooltip unit's cast bar below its health bar.")
     Print("/lh_tweaks unlock-location-bar on|off|reset - drag the location bar with its attached buttons, lock it in place, or restore its original position.")
     Print("/lh_tweaks all on|off - enable or disable all tweaks; merchant actions start on the next visit.")
     Print("/lh_tweaks remove-chatwindow-move-limit on - allow standard chat windows to move beyond the screen edges and hide their scrollbars.")
@@ -740,6 +742,8 @@ SlashCmdList.LH_TWEAKS = function(message)
         Print("unlock-location-bar: " .. (LH_TweaksDB.locationBar and "on" or "off") .. (pending and " (pending)" or ""))
         Print("unlock-tooltip: " .. (LH_TweaksDB.unlockTooltip and "on" or "off") .. (pending and " (pending)" or ""))
         Print("tooltip-player-details: " .. (LH_TweaksDB.tooltipPlayerDetails and "on" or "off"))
+        Print("tooltip-target-of-target: " .. (LH_TweaksDB.tooltipTargetOfTarget and "on" or "off"))
+        Print("tooltip-castbar: " .. (LH_TweaksDB.tooltipCastBar and "on" or "off"))
         Print("instant-fishing-loot: " .. (LH_TweaksDB.instantFishingLoot and "on" or "off"))
     elseif command == "all" and (value == "on" or value == "off") and extra == "" then
         local enabled = value == "on"
@@ -751,12 +755,15 @@ SlashCmdList.LH_TWEAKS = function(message)
         LH_TweaksDB.locationBar = enabled
         LH_TweaksDB.unlockTooltip = enabled
         LH_TweaksDB.tooltipPlayerDetails = enabled
+        LH_TweaksDB.tooltipTargetOfTarget = enabled
+        LH_TweaksDB.tooltipCastBar = enabled
         LH_TweaksDB.instantFishingLoot = enabled
         LH_TweaksDB.glowEquipment = enabled
         LH_TweaksDB.sortQuestsByLevel = questSortSupported and enabled
         Apply()
         if LH_Tweaks and LH_Tweaks.RefreshEquipmentGlow then LH_Tweaks:RefreshEquipmentGlow() end
-        if LH_Tweaks and LH_Tweaks.RefreshTooltipPlayerDetails then LH_Tweaks:RefreshTooltipPlayerDetails() end
+        if LH_Tweaks and LH_Tweaks.RefreshTooltipDetails then LH_Tweaks:RefreshTooltipDetails() end
+        if LH_Tweaks and LH_Tweaks.RefreshTooltipCastBar then LH_Tweaks:RefreshTooltipCastBar() end
         Print("All tweaks: " .. value .. (pending and " (layout changes pending; apply after combat or when UI frames load)" or ""))
     elseif command == "unlock-location-bar" and (value == "on" or value == "off" or value == "reset") and extra == "" then
         if value == "reset" then
@@ -782,8 +789,16 @@ SlashCmdList.LH_TWEAKS = function(message)
         Print("instant-fishing-loot: " .. value)
     elseif command == "tooltip-player-details" and (value == "on" or value == "off") and extra == "" then
         LH_TweaksDB.tooltipPlayerDetails = value == "on"
-        if LH_Tweaks and LH_Tweaks.RefreshTooltipPlayerDetails then LH_Tweaks:RefreshTooltipPlayerDetails() end
+        if LH_Tweaks and LH_Tweaks.RefreshTooltipDetails then LH_Tweaks:RefreshTooltipDetails() end
         Print("tooltip-player-details: " .. value)
+    elseif command == "tooltip-target-of-target" and (value == "on" or value == "off") and extra == "" then
+        LH_TweaksDB.tooltipTargetOfTarget = value == "on"
+        if LH_Tweaks and LH_Tweaks.RefreshTooltipDetails then LH_Tweaks:RefreshTooltipDetails() end
+        Print("tooltip-target-of-target: " .. value)
+    elseif command == "tooltip-castbar" and (value == "on" or value == "off") and extra == "" then
+        LH_TweaksDB.tooltipCastBar = value == "on"
+        if LH_Tweaks and LH_Tweaks.RefreshTooltipCastBar then LH_Tweaks:RefreshTooltipCastBar() end
+        Print("tooltip-castbar: " .. value)
     elseif command == "glow-equipment" and (value == "on" or value == "off") and extra == "" then
         LH_TweaksDB.glowEquipment = value == "on"
         if LH_Tweaks and LH_Tweaks.RefreshEquipmentGlow then LH_Tweaks:RefreshEquipmentGlow() end
@@ -868,6 +883,8 @@ Hub.features = {
     { key = "locationBar", command = "unlock-location-bar", section = "Positioning", label = "Unlock the location bar", tooltip = "Drag the zone-name area to move the location bar and its attached buttons. Disable to lock it at the saved position." },
     { key = "unlockTooltip", command = "unlock-tooltip", section = "Positioning", label = "Unlock the default tooltip", tooltip = "Drag the small circle at the tooltip's bottom-right corner. Disable to lock the saved position." },
     { key = "tooltipPlayerDetails", command = "tooltip-player-details", section = "Tooltip", label = "Show player class and talents", tooltip = "Color player names by class and show their talent distribution (such as 3/10/5) and specialization when the client provides the information. Inspectable players may take a moment to update." },
+    { key = "tooltipTargetOfTarget", command = "tooltip-target-of-target", section = "Tooltip", label = "Show target's target in tooltip", tooltip = "Show who the unit in the tooltip is targeting. Player names use their class color; your own name appears as MYSELF. Enabled separately from player class and talent details." },
+    { key = "tooltipCastBar", command = "tooltip-castbar", section = "Tooltip", label = "Show tooltip cast bar", tooltip = "Show the current spell cast or channel of the unit in the tooltip below its health bar. The bar appears only while that unit is casting." },
     { key = "autoRepair", command = "auto-repair", section = "Merchants", label = "Automatically repair equipment", tooltip = "Repair at merchants using your own money when the full repair cost is affordable." },
     { key = "autoSellGreys", command = "auto-sell-greys", section = "Merchants", label = "Automatically sell grey items", tooltip = "Sell poor-quality items from your bags on your next merchant visit." },
     { key = "instantFishingLoot", command = "instant-fishing-loot", section = "Fishing", label = "Loot fishing catches without a loot window", tooltip = "Collect fishing loot immediately when you interact with the bobber, including by right-click. If items remain after one second, show the normal loot window for manual recovery. Normal non-fishing loot is unchanged. BetterFishing is not required." },
@@ -900,7 +917,8 @@ function Hub:RestoreDefaults()
     locationReset, tooltipReset = true, true
     Apply()
     if self.RefreshEquipmentGlow then self:RefreshEquipmentGlow() end
-    if self.RefreshTooltipPlayerDetails then self:RefreshTooltipPlayerDetails() end
+    if self.RefreshTooltipDetails then self:RefreshTooltipDetails() end
+    if self.RefreshTooltipCastBar then self:RefreshTooltipCastBar() end
     if self.RefreshSettings then self:RefreshSettings() end
 end
 
@@ -920,6 +938,8 @@ events:SetScript("OnEvent", function(_, event, name)
         LH_TweaksDB.locationBar = LH_TweaksDB.locationBar == true
         LH_TweaksDB.unlockTooltip = LH_TweaksDB.unlockTooltip == true
         LH_TweaksDB.tooltipPlayerDetails = LH_TweaksDB.tooltipPlayerDetails == true
+        LH_TweaksDB.tooltipTargetOfTarget = LH_TweaksDB.tooltipTargetOfTarget == true
+        LH_TweaksDB.tooltipCastBar = LH_TweaksDB.tooltipCastBar == true
         LH_TweaksDB.instantFishingLoot = LH_TweaksDB.instantFishingLoot == true
         LH_TweaksDB.glowEquipment = LH_TweaksDB.glowEquipment ~= false
         LH_TweaksDB.sortQuestsByLevel = LH_TweaksDB.sortQuestsByLevel == true

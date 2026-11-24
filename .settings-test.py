@@ -27,6 +27,7 @@ function Settings.CreateCheckbox(c,s,tooltip)
  function row:AddModifyPredicate(fn) self.canModify=fn end
  table.insert(c.layout.rows,row);return row
 end
+function Settings.CreateDropdown() end
 function Settings.RegisterAddOnCategory(c) table.insert(registered,c) end
 function Settings.NotifyUpdate(v) notices[v]=(notices[v] or 0)+1 end
 function CreateSettingsListSectionHeaderInitializer(title)
@@ -56,9 +57,9 @@ local e=frames[#frames]
 e.scripts.OnEvent(e,'ADDON_LOADED','LH_Tweaks')
 local c=LH_Tweaks.category
 assert(c.name=='LH Tweaks' and #registered==1)
-assert(c.layout.rows[1].header=='Positioning')
-assert(c.layout.rows[2].setting.label=='Lock location bar')
-assert(c.layout.rows[4].setting.label=='Lock tooltip')
+assert(c.layout.rows[2].header=='Positioning')
+assert(c.layout.rows[3].setting.label=='Lock location bar')
+assert(c.layout.rows[5].setting.label=='Lock tooltip')
 SettingsPanel:DisplayCategory(c);assert(SettingsPanel.list.Header.Title.text=='LiteHawk Tweaks')
 SettingsPanel.IsShown=function() return true end
 local repairs=0
@@ -99,7 +100,7 @@ for _,feature in ipairs(LH_Tweaks.features) do
  s.set(true);assert(s.get()==true and LH_TweaksDB[feature.key]~=lock)
  s.set(false);assert(s.get()==false and LH_TweaksDB[feature.key]==lock);count=count+1
 end
-assert(count==9)
+assert(count==13)
 SlashCmdList.LH_TWEAKS('auto-repair on')
 assert(registry.LH_Tweaks_autoRepair.get() and notices.LH_Tweaks_autoRepair>0)
 combat=true;registry.LH_Tweaks_moveChatBarToTop.set(true)
@@ -120,4 +121,4 @@ assert(#registered==2 and LH_Tweaks.modules.demo.category.parent==c)
 LH_Tweaks:RegisterModule('demo','Demo',function() error('duplicate') end)
 e.scripts.OnEvent(e,'PLAYER_LOGIN');assert(#registered==2)
 ''')
-print('PASS: native category, title isolation, header tooltips, nine controls, chat/UI synchronization, combat deferral, scoped defaults, position resets, bulk controls and module registration')
+print('PASS: native category, title isolation, header tooltips, 13 controls, chat/UI synchronization, combat deferral, scoped defaults, position resets, bulk controls and module registration')

@@ -7,6 +7,7 @@ from lupa import LuaRuntime
 lua=LuaRuntime(unpack_returned_tuples=True)
 lua.execute('''
 unpack=table.unpack; SlashCmdList={}; DEFAULT_CHAT_FRAME={AddMessage=function() end}
+LH_LayoutProfiles={Register=function() end, AddSetting=function() end, ApplyTweaksSourceToAll=function() end}
 local M={}
 function M:SetParent(p) self.parent=p; if p then p.children[#p.children+1]=self end end
 function M:GetChildren() local t={}; for _,v in ipairs(self.children) do if v.parent==self then t[#t+1]=v end end; return table.unpack(t) end

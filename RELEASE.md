@@ -4,7 +4,7 @@ LH_Tweaks is the shared configuration host. Its folder name and dependency ident
 
 ## Publishing
 
-1. Publish the LH_Tweaks project with `LH_Tweaks.lua`, `TooltipDetails.lua`, `Settings.lua`, `LH_Tweaks.toc`, icons and documentation. Exclude Git metadata, test runtimes and local test scripts from release archives.
+1. Publish the LH_Tweaks project with `LH_Tweaks.lua`, `TooltipDetails.lua`, `TooltipCastBar.lua`, `Settings.lua`, `LH_Tweaks.toc`, icons and documentation. Exclude Git metadata, test runtimes and local test scripts from release archives.
 2. Publish each companion addon in its own project. Keep `## Dependencies: LH_Tweaks` in its TOC.
 3. For each companion release, add the published LH_Tweaks CurseForge project as a **Required Dependency** in the file's relations. Use the actual project identifier assigned by CurseForge.
 4. Check a clean CurseForge client installation of a companion release: it should install both folders and enable LH_Tweaks before loading the companion.

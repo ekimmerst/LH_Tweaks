@@ -20,7 +20,7 @@ local inspectConfig = Constants and Constants.TraitConsts and Constants.TraitCon
 local nodeTrees = {}
 local cache = {}
 local activeInspect, lastInspect, lastInspectTime
-local shownGUID, detailsLine, originalColor
+local shownGUID, detailsLine, originalColor, targetLine
 
 local function SafeCall(fn, ...)
     if type(fn) ~= "function" then return nil end
@@ -122,9 +122,19 @@ local function TalentText(unit, inspect)
     return spec or distribution
 end
 
-local function CurrentUnit()
+local function TooltipUnit()
     local _, unit = SafeCall(tooltip.GetUnit, tooltip)
     unit = Plain(unit)
+    local owner = SafeCall(tooltip.GetOwner, tooltip)
+    local ownerUnit = owner and Plain(owner.unit)
+    if type(ownerUnit) == "string" and Plain(SafeCall(UnitExists, ownerUnit)) then
+        return ownerUnit
+    end
+    return type(unit) == "string" and unit or nil
+end
+
+local function CurrentUnit()
+    local unit = TooltipUnit()
     if not unit or not Plain(SafeCall(UnitIsPlayer, unit)) then return nil end
     local guid = Plain(SafeCall(UnitGUID, unit))
     if type(guid) ~= "string" then return nil end
@@ -141,7 +151,48 @@ local function RestoreName()
     originalColor = nil
 end
 
+local function DrawTarget()
+    local unit = TooltipUnit()
+    local target
+    if unit and LH_TweaksDB and LH_TweaksDB.tooltipTargetOfTarget then
+        target = unit == "player" and "target" or unit .. "target"
+        if not Plain(SafeCall(UnitExists, target)) then
+            if Plain(SafeCall(UnitIsUnit, unit, "player")) then
+                target = "target"
+            elseif Plain(SafeCall(UnitIsUnit, unit, "target")) then
+                target = "targettarget"
+            end
+            if not Plain(SafeCall(UnitExists, target)) then target = nil end
+        end
+    end
+    local name = target and Plain(SafeCall(UnitName, target))
+    if type(name) ~= "string" or name == "" then
+        if targetLine then
+            targetLine.left:SetText("")
+            targetLine.right:SetText("")
+            targetLine.name = nil
+        end
+        return
+    end
+    if Plain(SafeCall(UnitIsUnit, target, "player")) then name = "MYSELF" end
+    local _, class = SafeCall(UnitClass, target)
+    local color = RAID_CLASS_COLORS and RAID_CLASS_COLORS[Plain(class)]
+    if not targetLine then
+        tooltip:AddDoubleLine("Target:", name, 0.8, 0.8, 0.8, 1, 1, 1)
+        local prefix = (tooltip:GetName() or "GameTooltip")
+        local index = tooltip:NumLines()
+        targetLine = { left = _G[prefix .. "TextLeft" .. index], right = _G[prefix .. "TextRight" .. index] }
+    end
+    local changed = targetLine.name ~= name
+    targetLine.left:SetText("Target:")
+    targetLine.right:SetText(name)
+    targetLine.right:SetTextColor(color and color.r or 1, color and color.g or 1, color and color.b or 1)
+    targetLine.name = name
+    if changed then tooltip:Show() end
+end
+
 local function Draw()
+    DrawTarget()
     if not LH_TweaksDB or not LH_TweaksDB.tooltipPlayerDetails then
         RestoreName()
         if detailsLine then detailsLine:SetText("") end
@@ -191,13 +242,15 @@ local function Draw()
 end
 
 local events = CreateFrame("Frame")
-for _, event in ipairs({ "INSPECT_READY", "INSPECT_TALENT_READY", "PLAYER_TALENT_UPDATE", "PLAYER_SPECIALIZATION_CHANGED", "TRAIT_CONFIG_UPDATED" }) do
+for _, event in ipairs({ "INSPECT_READY", "INSPECT_TALENT_READY", "PLAYER_TALENT_UPDATE", "PLAYER_SPECIALIZATION_CHANGED", "TRAIT_CONFIG_UPDATED", "UNIT_TARGET", "PLAYER_TARGET_CHANGED" }) do
     if not (C_EventUtils and C_EventUtils.IsEventValid) or C_EventUtils.IsEventValid(event) then
         pcall(events.RegisterEvent, events, event)
     end
 end
 events:SetScript("OnEvent", function(_, event, guid)
-    if event == "INSPECT_READY" or event == "INSPECT_TALENT_READY" then
+    if event == "UNIT_TARGET" or event == "PLAYER_TARGET_CHANGED" then
+        if tooltip:IsShown() then Draw() end
+    elseif event == "INSPECT_READY" or event == "INSPECT_TALENT_READY" then
         if (event == "INSPECT_TALENT_READY") ~= legacyInspect then return end
         local request = activeInspect
         if not request or (guid and guid ~= request.guid) then return end
@@ -213,17 +266,24 @@ events:SetScript("OnEvent", function(_, event, guid)
 end)
 
 tooltip:HookScript("OnTooltipCleared", function()
-    shownGUID, detailsLine, originalColor = nil, nil, nil
+    shownGUID, detailsLine, originalColor, targetLine = nil, nil, nil, nil
 end)
 if TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall
     and Enum and Enum.TooltipDataType and Enum.TooltipDataType.Unit then
     TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, function(frame)
         if frame == tooltip then Draw() end
     end)
-else
-    tooltip:HookScript("OnTooltipSetUnit", Draw)
 end
+tooltip:HookScript("OnTooltipSetUnit", Draw)
+tooltip:HookScript("OnUpdate", function(_, elapsed)
+    if not LH_TweaksDB or not LH_TweaksDB.tooltipTargetOfTarget then return end
+    tooltip.targetRefreshElapsed = (tooltip.targetRefreshElapsed or 0) + elapsed
+    if tooltip.targetRefreshElapsed >= 0.15 then
+        tooltip.targetRefreshElapsed = 0
+        DrawTarget()
+    end
+end)
 
-function Hub:RefreshTooltipPlayerDetails()
+function Hub:RefreshTooltipDetails()
     Draw()
 end
