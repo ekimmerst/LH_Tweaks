@@ -21,7 +21,7 @@
   <li><strong>Move the location bar and tooltip:</strong> Unlock and drag the zone name bar with its attached buttons, or move the default tooltip using its small drag handle and position preview. Lock either one at its saved position or reset it. Choose the texture of the health bar below the tooltip from a dropdown with previews of available status bar textures.</li>
   <li><strong>Player tooltip details:</strong> Enable <strong>Show player class and talents</strong> under the Tooltip section, or type <code>/lh_tweaks tooltip-player-details on</code>. Player names use their class color. A second line shows the specialization and talent distribution, such as <code>Feral (3/10/5)</code>, when the client provides those details. Other players may require a brief inspection delay; if their talents cannot be read, the tooltip shows only the available information. This option is off by default.</li>
   <li><strong>Target's target in the tooltip:</strong> Enable <strong>Show target's target in tooltip</strong> under Tooltip, or type <code>/lh_tweaks tooltip-target-of-target on</code>. A Target line shows whom the unit in the tooltip is targeting. Players appear in their class color; if the target is you, the line reads <code>MYSELF</code>. This option is off by default and works independently of player tooltip details.</li>
-  <li><strong>Tooltip cast bar:</strong> Enable <strong>Show tooltip cast bar</strong> under Tooltip, or type <code>/lh_tweaks tooltip-castbar on</code>. While the unit whose tooltip is open is casting or channeling, its spell name and progress appear in a bar below the tooltip's health bar. The bar hides when the cast ends or the tooltip closes. This option is off by default.</li>
+  <li><strong>Tooltip cast bar:</strong> Enable <strong>Show tooltip cast bar</strong> under Tooltip, or type <code>/lh_tweaks tooltip-castbar on</code>. While the unit whose tooltip is open is casting or channeling, its spell name and progress appear in a bar below the tooltip's health bar. The cast bar matches the health bar's height and texture. It hides when the cast ends or the tooltip closes. This option is off by default.</li>
   <li><strong>Merchant chores:</strong> Automatically repair your gear with your own gold when you can afford it, and sell grey items from your bags. If Leatrix Plus already handles either action, LH Tweaks leaves that action to it.</li>
   <li><strong>Fishing loot:</strong> Pick up fishing catches without briefly opening the loot window. If something remains, the normal loot window appears so you can collect it yourself. Other loot works as usual.</li>
   <li><strong>Equipment glow:</strong> Show a thicker, brighter quality-colored border on uncommon or better equipment in Blizzard bags and on the character sheet. Common white items keep their standard border. This is enabled by default and can be turned off in Settings or with <code>/lh_tweaks glow-equipment off</code>.</li>
@@ -71,6 +71,12 @@
 <p>Thanks to Woffle of Dark Iron [US] and discoteq for <a href="https://www.curseforge.com/wow/addons/doomcooldownpulse">Doom_CooldownPulse</a>, and to Sideshow and Talyrius for <a href="https://www.curseforge.com/wow/addons/tinydps">TinyDPS</a>. Their work deserves recognition. LH CooldownPulse carries that pulse idea forward for this UI; LH TinyDPS is my own compact display for WoW's built-in meter data.</p>
 
 <h2 style="color: #73c9c4;">Changelog</h2>
+
+<p><strong>0.11.6 - Forever and Retail</strong></p>
+
+<ul>
+  <li>Fixed the tooltip cast bar for mouseover units and client-provided cast durations. Matched its height and texture to the tooltip health bar.</li>
+</ul>
 
 <p><strong>0.11.5 - Forever and Retail</strong></p>
 

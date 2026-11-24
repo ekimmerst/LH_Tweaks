@@ -19,8 +19,6 @@ label:SetPoint("LEFT", bar, "LEFT", 5, 0)
 label:SetPoint("RIGHT", bar, "RIGHT", -5, 0)
 label:SetJustifyH("CENTER")
 
-local castStart, castEnd, channeling, shownUnit, shownGUID, shownName
-
 local function Plain(value)
     if issecretvalue and issecretvalue(value) then return nil end
     return value
@@ -33,7 +31,6 @@ local function SafeCall(fn, ...)
 end
 
 local function Hide()
-    castStart, castEnd, channeling, shownUnit, shownGUID, shownName = nil, nil, nil, nil, nil, nil
     bar:Hide()
 end
 
@@ -46,44 +43,62 @@ local function Place()
     end
     local width = anchor:GetWidth()
     if bar:GetWidth() ~= width then bar:SetWidth(width) end
+    if healthBar then
+        local height = healthBar:GetHeight()
+        if height and height > 0 and bar:GetHeight() ~= height then bar:SetHeight(height) end
+        local texture = healthBar:GetStatusBarTexture()
+        local atlas = texture and texture.GetAtlas and texture:GetAtlas()
+        local path = texture and texture:GetTexture()
+        if atlas and bar.textureAtlas ~= atlas then
+            bar:GetStatusBarTexture():SetAtlas(atlas)
+            bar.textureAtlas, bar.texturePath = atlas, nil
+        elseif not atlas and path and (bar.texturePath ~= path or bar.textureAtlas) then
+            bar:SetStatusBarTexture(path)
+            bar.texturePath, bar.textureAtlas = path, nil
+        end
+    end
 end
 
 local function Refresh()
     if not LH_TweaksDB or not LH_TweaksDB.tooltipCastBar or not tooltip:IsShown() then Hide(); return end
     local _, unit = SafeCall(tooltip.GetUnit, tooltip)
     unit = Plain(unit)
+    local owner = SafeCall(tooltip.GetOwner, tooltip)
+    local ownerUnit = owner and Plain(owner.unit)
+    if type(ownerUnit) == "string" and Plain(SafeCall(UnitExists, ownerUnit)) then
+        unit = ownerUnit
+    end
     if type(unit) ~= "string" then Hide(); return end
-    local guid = Plain(SafeCall(UnitGUID, unit))
-    if type(guid) ~= "string" then Hide(); return end
-
-    local name, _, _, _, startTime, endTime = SafeCall(UnitCastingInfo, unit)
+    local name, _, _, startTime, endTime = SafeCall(UnitCastingInfo, unit)
     local isChannel = false
-    if not Plain(name) then
-        name, _, _, _, startTime, endTime = SafeCall(UnitChannelInfo, unit)
+    if not name then
+        name, _, _, startTime, endTime = SafeCall(UnitChannelInfo, unit)
         isChannel = true
     end
-    name, startTime, endTime = Plain(name), Plain(startTime), Plain(endTime)
-    if type(name) ~= "string" or type(startTime) ~= "number" or type(endTime) ~= "number"
-        or endTime <= startTime or GetTime() * 1000 >= endTime then
-        Hide()
-        return
-    end
+    if not name then Hide(); return end
 
-    local changed = shownGUID ~= guid or shownUnit ~= unit or shownName ~= name or castStart ~= startTime
-        or castEnd ~= endTime or channeling ~= isChannel
-    castStart, castEnd, channeling, shownUnit, shownGUID, shownName = startTime, endTime, isChannel, unit, guid, name
-    if changed then
-        label:SetText(name)
-        if isChannel then
-            bar:SetStatusBarColor(0.25, 0.7, 1)
-        else
-            bar:SetStatusBarColor(1, 0.7, 0.2)
+    local duration = SafeCall(isChannel and UnitChannelDuration or UnitCastingDuration, unit)
+    if duration and bar.SetTimerDuration then
+        bar:SetTimerDuration(duration, 0, isChannel and 1 or 0)
+    else
+        startTime, endTime = Plain(startTime), Plain(endTime)
+        if type(startTime) ~= "number" or type(endTime) ~= "number"
+            or endTime <= startTime or GetTime() * 1000 >= endTime then
+            Hide()
+            return
         end
-        bar:SetMinMaxValues(0, (endTime - startTime) / 1000)
+        local total = (endTime - startTime) / 1000
+        local elapsed = GetTime() - startTime / 1000
+        bar:SetMinMaxValues(0, total)
+        bar:SetValue(isChannel and total - elapsed or elapsed)
+    end
+    label:SetText(name)
+    if isChannel then
+        bar:SetStatusBarColor(0.25, 0.7, 1)
+    else
+        bar:SetStatusBarColor(1, 0.7, 0.2)
     end
     Place()
-    local elapsed = GetTime() - startTime / 1000
-    bar:SetValue(isChannel and (endTime - startTime) / 1000 - elapsed or elapsed)
     bar:Show()
 end
 
@@ -103,10 +118,10 @@ events:SetScript("OnEvent", function()
     if tooltip:IsShown() then Refresh() end
 end)
 
-bar:SetScript("OnUpdate", function(self, elapsed)
-    self.refreshElapsed = (self.refreshElapsed or 0) + elapsed
-    if self.refreshElapsed >= 0.05 then
-        self.refreshElapsed = 0
+tooltip:HookScript("OnUpdate", function(self, elapsed)
+    self.castRefreshElapsed = (self.castRefreshElapsed or 0) + elapsed
+    if self.castRefreshElapsed >= 0.05 then
+        self.castRefreshElapsed = 0
         Refresh()
     end
 end)
@@ -118,9 +133,8 @@ if TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall
     TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, function(frame)
         if frame == tooltip then Refresh() end
     end)
-else
-    tooltip:HookScript("OnTooltipSetUnit", Refresh)
 end
+tooltip:HookScript("OnTooltipSetUnit", Refresh)
 
 function Hub:RefreshTooltipCastBar()
     Refresh()
