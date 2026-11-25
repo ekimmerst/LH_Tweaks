@@ -11,6 +11,7 @@ local locationReset = false
 local worldReady = false
 local tooltipState, tooltipReset
 local tooltipBarState
+local raidManagerState
 local tooltipBarTextures = {
     { key = "Blizzard", path = "Interface\\TargetingFrame\\UI-StatusBar" },
     { key = "Blizzard Character Skills Bar", path = "Interface\\PaperDollInfoFrame\\UI-Character-Skills-Bar" },
@@ -594,6 +595,37 @@ local function InstallFunctionHooks()
     end
 end
 
+local function ApplyRaidManager()
+    local manager = CompactRaidFrameManager
+    if not manager then return end
+    if not raidManagerState or raidManagerState.frame ~= manager then
+        raidManagerState = { frame = manager }
+        local state = raidManagerState
+        hooksecurefunc(manager, "SetAlpha", function(self, alpha)
+            if state.busy or not state.hidden then return end
+            state.original = alpha
+            state.busy = true
+            self:SetAlpha(0)
+            state.busy = false
+        end)
+    end
+    local state = raidManagerState
+    local hide = LH_TweaksDB.hideRaidManagerInGroup and IsInGroup and IsInGroup() == true
+    if hide then
+        if not state.hidden then state.original = manager:GetAlpha() end
+        state.hidden = true
+        state.busy = true
+        manager:SetAlpha(0)
+        state.busy = false
+    elseif state.hidden then
+        state.hidden = false
+        state.busy = true
+        manager:SetAlpha(state.original or 1)
+        state.busy = false
+        state.original = nil
+    end
+end
+
 Apply = function()
     if not initialized then return end
     if InCombat() then pending = true; return end
@@ -615,6 +647,7 @@ Apply = function()
     ApplyTooltip()
     ApplyTooltipBarTexture()
     ApplyQuestSort()
+    ApplyRaidManager()
     applied = LH_TweaksDB.chatWindow == true
     InstallFunctionHooks()
     local frames = DiscoverFrames()
@@ -713,6 +746,7 @@ local function Help()
     Print("/lh_tweaks tooltip-player-details on|off - color player names by class and show available talents and specialization.")
     Print("/lh_tweaks tooltip-target-of-target on|off - show the tooltip unit's target in its class color.")
     Print("/lh_tweaks tooltip-castbar on|off - show the tooltip unit's cast bar below its health bar.")
+    Print("/lh_tweaks hide-raid-manager-in-group on|off - hide the left raid controls while in a party or raid.")
     Print("/lh_tweaks unlock-location-bar on|off|reset - drag the location bar with its attached buttons, lock it in place, or restore its original position.")
     Print("/lh_tweaks all on|off - enable or disable all tweaks; merchant actions start on the next visit.")
     Print("/lh_tweaks remove-chatwindow-move-limit on - allow standard chat windows to move beyond the screen edges and hide their scrollbars.")
@@ -744,6 +778,7 @@ SlashCmdList.LH_TWEAKS = function(message)
         Print("tooltip-player-details: " .. (LH_TweaksDB.tooltipPlayerDetails and "on" or "off"))
         Print("tooltip-target-of-target: " .. (LH_TweaksDB.tooltipTargetOfTarget and "on" or "off"))
         Print("tooltip-castbar: " .. (LH_TweaksDB.tooltipCastBar and "on" or "off"))
+        Print("hide-raid-manager-in-group: " .. (LH_TweaksDB.hideRaidManagerInGroup and "on" or "off") .. (pending and " (pending)" or ""))
         Print("instant-fishing-loot: " .. (LH_TweaksDB.instantFishingLoot and "on" or "off"))
     elseif command == "all" and (value == "on" or value == "off") and extra == "" then
         local enabled = value == "on"
@@ -757,6 +792,7 @@ SlashCmdList.LH_TWEAKS = function(message)
         LH_TweaksDB.tooltipPlayerDetails = enabled
         LH_TweaksDB.tooltipTargetOfTarget = enabled
         LH_TweaksDB.tooltipCastBar = enabled
+        LH_TweaksDB.hideRaidManagerInGroup = enabled
         LH_TweaksDB.instantFishingLoot = enabled
         LH_TweaksDB.glowEquipment = enabled
         LH_TweaksDB.sortQuestsByLevel = questSortSupported and enabled
@@ -799,6 +835,10 @@ SlashCmdList.LH_TWEAKS = function(message)
         LH_TweaksDB.tooltipCastBar = value == "on"
         if LH_Tweaks and LH_Tweaks.RefreshTooltipCastBar then LH_Tweaks:RefreshTooltipCastBar() end
         Print("tooltip-castbar: " .. value)
+    elseif command == "hide-raid-manager-in-group" and (value == "on" or value == "off") and extra == "" then
+        LH_TweaksDB.hideRaidManagerInGroup = value == "on"
+        Apply()
+        Print("hide-raid-manager-in-group: " .. value .. (pending and " (pending; applies after combat)" or ""))
     elseif command == "glow-equipment" and (value == "on" or value == "off") and extra == "" then
         LH_TweaksDB.glowEquipment = value == "on"
         if LH_Tweaks and LH_Tweaks.RefreshEquipmentGlow then LH_Tweaks:RefreshEquipmentGlow() end
@@ -885,6 +925,7 @@ Hub.features = {
     { key = "tooltipPlayerDetails", command = "tooltip-player-details", section = "Tooltip", label = "Show player class and talents", tooltip = "Color player names by class and show their talent distribution (such as 3/10/5) and specialization when the client provides the information. Inspectable players may take a moment to update." },
     { key = "tooltipTargetOfTarget", command = "tooltip-target-of-target", section = "Tooltip", label = "Show target's target in tooltip", tooltip = "Show who the unit in the tooltip is targeting. Player names use their class color; your own name appears as MYSELF. Enabled separately from player class and talent details." },
     { key = "tooltipCastBar", command = "tooltip-castbar", section = "Tooltip", label = "Show tooltip cast bar", tooltip = "Show the current spell cast or channel of the unit in the tooltip below its health bar. The bar appears only while that unit is casting." },
+    { key = "hideRaidManagerInGroup", command = "hide-raid-manager-in-group", section = "Group", label = "Hide raid controls while grouped", tooltip = "Hide Blizzard's left-side raid controls, including marker buttons, while in a party or raid. Show them again when you leave the group." },
     { key = "autoRepair", command = "auto-repair", section = "Merchants", label = "Automatically repair equipment", tooltip = "Repair at merchants using your own money when the full repair cost is affordable." },
     { key = "autoSellGreys", command = "auto-sell-greys", section = "Merchants", label = "Automatically sell grey items", tooltip = "Sell poor-quality items from your bags on your next merchant visit." },
     { key = "instantFishingLoot", command = "instant-fishing-loot", section = "Fishing", label = "Loot fishing catches without a loot window", tooltip = "Collect fishing loot immediately when you interact with the bobber, including by right-click. If items remain after one second, show the normal loot window for manual recovery. Normal non-fishing loot is unchanged. BetterFishing is not required." },
@@ -923,7 +964,7 @@ function Hub:RestoreDefaults()
 end
 
 local events = CreateFrame("Frame")
-for _, event in ipairs({"ADDON_LOADED", "PLAYER_LOGIN", "PLAYER_ENTERING_WORLD", "PLAYER_REGEN_ENABLED", "UPDATE_CHAT_WINDOWS", "UPDATE_FLOATING_CHAT_WINDOWS", "MERCHANT_SHOW"}) do
+for _, event in ipairs({"ADDON_LOADED", "PLAYER_LOGIN", "PLAYER_ENTERING_WORLD", "PLAYER_REGEN_ENABLED", "GROUP_ROSTER_UPDATE", "UPDATE_CHAT_WINDOWS", "UPDATE_FLOATING_CHAT_WINDOWS", "MERCHANT_SHOW"}) do
     events:RegisterEvent(event)
 end
 events:SetScript("OnEvent", function(_, event, name)
@@ -940,6 +981,7 @@ events:SetScript("OnEvent", function(_, event, name)
         LH_TweaksDB.tooltipPlayerDetails = LH_TweaksDB.tooltipPlayerDetails == true
         LH_TweaksDB.tooltipTargetOfTarget = LH_TweaksDB.tooltipTargetOfTarget == true
         LH_TweaksDB.tooltipCastBar = LH_TweaksDB.tooltipCastBar == true
+        LH_TweaksDB.hideRaidManagerInGroup = LH_TweaksDB.hideRaidManagerInGroup == true
         LH_TweaksDB.instantFishingLoot = LH_TweaksDB.instantFishingLoot == true
         LH_TweaksDB.glowEquipment = LH_TweaksDB.glowEquipment ~= false
         LH_TweaksDB.sortQuestsByLevel = LH_TweaksDB.sortQuestsByLevel == true
